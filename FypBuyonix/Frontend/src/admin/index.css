@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Hide scrollbar in admin sidebar */
+nav::-webkit-scrollbar {
+    display: none;
+}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Key Setup Helper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .step h3 {
+            display: inline-block;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .step p {
+            color: #555;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .input-group {
+            margin-top: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .copy-btn {
+            background: #28a745;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .copy-btn:hover {
+            background: #218838;
+        }
+        
+        .code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Gemini API Setup</h1>
+        <p class="subtitle">Get your FREE API key for AI-powered bargaining</p>
+        
+        <div class="step">
+            <span class="step-number">1</span>
+            <h3>Get Your API Key</h3>
+            <p>Click the button below to open Google AI Studio and create your FREE API key.</p>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn">
+                🔑 Get API Key
+            </a>
+        </div>
+        
+        <div class="step">
+            <span class="step-number">2</span>
+            <h3>Copy Your API Key</h3>
+            <p>After creating your API key in Google AI Studio, paste it below:</p>
+            <div class="input-group">
+                <label for="apiKey">Your Gemini API Key:</label>
+                <input type="text" id="apiKey" placeholder="AIzaSy...">
+            </div>
+        </div>
+        
+        <div class="step">
+            <span class="step-number">3</span>
+            <h3>Add to Your Project</h3>
+            <p>Copy the line below and paste it into your <code>Backend/.env</code> file:</p>
+            <div class="code" id="envLine">
+                GEMINI_API_KEY=YOUR_API_KEY_HERE
+            </div>
+            <button class="copy-btn" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+        </div>
+        
+        <div class="success" id="successMsg">
+            ✅ <strong>Success!</strong> Configuration copied to clipboard. Now paste it into your <code>Backend/.env</code> file and restart your backend server.
+        </div>
+    </div>
+    
+    <script>
+        const apiKeyInput = document.getElementById('apiKey');
+        const envLine = document.getElementById('envLine');
+        const successMsg = document.getElementById('successMsg');
+        
+        apiKeyInput.addEventListener('input', function() {
+            const key = this.value.trim();
+            if (key) {
+                envLine.textContent = `GEMINI_API_KEY=${key}`;
+            } else {
+                envLine.textContent = 'GEMINI_API_KEY=YOUR_API_KEY_HERE';
+            }
+        });
+        
+        function copyToClipboard() {
+            const text = envLine.textContent;
+            navigator.clipboard.writeText(text).then(function() {
+                successMsg.style.display = 'block';
+                setTimeout(() => {
+                    successMsg.style.display = 'none';
+                }, 5000);
+            }, function(err) {
+                alert('Failed to copy: ' + err);
+            });
+        }
+    </script>
+</body>
+</html>

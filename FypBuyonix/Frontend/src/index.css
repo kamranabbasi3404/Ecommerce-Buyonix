@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* Hide Stripe badge/icon */
+.__PrivateStripeElement-input,
+.StripeElement--focus,
+iframe[title*="Stripe"],
+.StripeElement iframe {
+  /* keep payment elements visible */
+}
+
+/* Hide Stripe's floating badge */
+[class*="__PrivateStripe"],
+div[data-stripe-element-id] + div,
+.stripe-badge,
+iframe[name*="stripe"] {
+  /* These are styled by Stripe, we don't hide the payment form */
+}
+
+/* Specifically hide the Stripe badge that floats on page */
+body > iframe[title*="Stripe"],
+body > div[style*="z-index: 2147483647"] {
+  display: none !important;
+}
+
+/* Hide Stripe powered by badge */
+.powered-by-stripe,
+[class*="powered-by"],
+div[style*="position: fixed"][style*="stripe"] {
+  display: none !important;
+}
