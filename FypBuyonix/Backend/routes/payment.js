@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { createPaymentIntent } = require('../config/stripe');
+const { createPaymentIntent, createCheckoutSession } = require('../config/stripe');
 
 /**
  * POST /payment/create-payment-intent
@@ -31,6 +31,42 @@ router.post('/create-payment-intent', async (req, res) => {
         }
     } catch (error) {
         console.error('Error in create-payment-intent:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+});
+
+/**
+ * POST /payment/create-checkout-session
+ * Create a Stripe Checkout Session (redirects to Stripe's hosted page)
+ */
+router.post('/create-checkout-session', async (req, res) => {
+    try {
+        const { items, customerEmail, successUrl, cancelUrl } = req.body;
+
+        if (!items || items.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No items provided',
+            });
+        }
+
+        const result = await createCheckoutSession(
+            items,
+            customerEmail,
+            successUrl || 'http://localhost:5173/order-confirmation',
+            cancelUrl || 'http://localhost:5173/checkout'
+        );
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(500).json(result);
+        }
+    } catch (error) {
+        console.error('Error in create-checkout-session:', error);
         res.status(500).json({
             success: false,
             error: error.message,

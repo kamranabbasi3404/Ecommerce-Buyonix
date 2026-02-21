@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContextType';
 import { FaArrowLeft } from 'react-icons/fa';
 import { checkAuthStatus } from '../utils/auth';
-import { Elements } from '@stripe/react-stripe-js';
-import { getStripe, createPaymentIntent, stripeAppearance } from '../config/stripe';
 import RealStripePayment from '../components/RealStripePayment';
 import { trackPurchase } from '../utils/interactionTracking';
 
@@ -34,7 +32,7 @@ const BuyNow: React.FC = () => {
 
   // Stripe state
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [stripePromise] = useState(() => getStripe());
+  const [stripeError, setStripeError] = useState<string>('');
 
   // Check authentication on component mount
   useEffect(() => {
@@ -78,19 +76,32 @@ const BuyNow: React.FC = () => {
         const shipping = 10.00;
         const total = subtotal + shipping;
 
-        const result = await createPaymentIntent(total, 'usd', {
-          customerEmail: formData.email,
-          customerName: `${formData.firstName} ${formData.lastName}`,
-        });
+        setStripeError('');
+        try {
+          const response = await fetch('http://localhost:5000/payment/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: total, currency: 'usd' }),
+          });
 
-        if (result && result.success) {
-          setClientSecret(result.clientSecret);
+          const result = await response.json();
+
+          if (result && result.success) {
+            setClientSecret(result.clientSecret);
+            console.log('✅ Payment intent created successfully');
+          } else {
+            setStripeError('Could not initialize payment. Please try again.');
+            console.error('❌ Payment intent failed:', result);
+          }
+        } catch (error) {
+          console.error('❌ Error creating payment intent:', error);
+          setStripeError('Payment service unavailable. Please try again.');
         }
       }
     };
 
     initializePayment();
-  }, [formData.paymentMethod, formData.email, formData.firstName, formData.lastName, cartContext]);
+  }, [formData.paymentMethod, cartContext]);
 
   if (!cartContext) {
     return null;
@@ -146,7 +157,7 @@ const BuyNow: React.FC = () => {
     }));
   };
 
-  const handlePlaceOrder = async (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent, skipCardCheck = false) => {
     e.preventDefault();
 
     const localLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -163,9 +174,9 @@ const BuyNow: React.FC = () => {
       return;
     }
 
-    // ✅ Card payment validation - must use Stripe payment form, not Place Order button
-    if (formData.paymentMethod === 'card') {
-      alert('⚠️ For card payments, please use the "Pay Now" button in the Card Payment section above.');
+    // ✅ Card payment validation - must use Stripe payment form (skip if already paid)
+    if (formData.paymentMethod === 'card' && !skipCardCheck) {
+      alert('⚠️ For card payments, please use the "Pay" button in the Card Payment section above.');
       return;
     }
 
@@ -210,10 +221,7 @@ const BuyNow: React.FC = () => {
       const result = await response.json();
       console.log('Order placed successfully:', result);
 
-      // Track purchase for each item in cart
       for (const item of cartItems) {
-        // You can add rating tracking here later
-        // For now, just track the purchase without rating
         await trackPurchase(item._id);
       }
 
@@ -426,30 +434,42 @@ const BuyNow: React.FC = () => {
                 </div>
               )}
 
-
               {formData.paymentMethod === 'card' && clientSecret && (
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="font-bold text-gray-900 text-lg mb-4">💳 Card Payment (Stripe)</h3>
-                  <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-                    <RealStripePayment
-                      amount={total}
-                      onSuccess={() => {
-                        console.log('✅ Payment successful!');
-                        handlePlaceOrder(new Event('submit') as any);
-                      }}
-                      onError={(error: string) => {
-                        console.error('❌ Payment failed:', error);
-                      }}
-                    />
-                  </Elements>
+                  <RealStripePayment
+                    amount={total}
+                    clientSecret={clientSecret}
+                    onSuccess={() => {
+                      console.log('✅ Payment successful!');
+                      handlePlaceOrder(new Event('submit') as any, true);
+                    }}
+                    onError={(error: string) => {
+                      console.error('❌ Payment failed:', error);
+                    }}
+                  />
                 </div>
               )}
 
-              {formData.paymentMethod === 'card' && !clientSecret && (
+              {formData.paymentMethod === 'card' && !clientSecret && !stripeError && (
                 <div className="border-t border-gray-200 pt-6">
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-                    <span className="ml-3 text-gray-600">Initializing payment...</span>
+                    <span className="ml-3 text-gray-600">Initializing Stripe payment...</span>
+                  </div>
+                </div>
+              )}
+
+              {formData.paymentMethod === 'card' && stripeError && (
+                <div className="border-t border-gray-200 pt-6">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                    <p className="text-red-800 font-medium">⚠️ {stripeError}</p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+                    >
+                      Retry
+                    </button>
                   </div>
                 </div>
               )}
