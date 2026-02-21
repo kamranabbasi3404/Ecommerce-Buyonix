@@ -145,10 +145,14 @@ class CollaborativeFilteringModel:
         self.build_user_item_matrix(interactions_df)
         
         # Step 2: Apply SVD (Matrix Factorization)
-        print(f"   • Using {self.n_factors} latent factors")
+        # n_components must be < min(n_samples, n_features)
+        n_users, n_products = self.user_item_matrix.shape
+        actual_n_factors = min(self.n_factors, n_users - 1, n_products - 1, max(n_users, n_products))
+        actual_n_factors = max(actual_n_factors, 1)  # At least 1 factor
+        print(f"   • Using {actual_n_factors} latent factors (requested {self.n_factors})")
         print("   • Factorizing user-item matrix...")
         
-        self.svd_model = TruncatedSVD(n_components=self.n_factors, random_state=42)
+        self.svd_model = TruncatedSVD(n_components=actual_n_factors, random_state=42)
         self.svd_model.fit(self.user_item_matrix.values)
         
         # Step 3: Calculate explained variance

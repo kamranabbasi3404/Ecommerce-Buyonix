@@ -75,18 +75,8 @@ class VisualSearchHelper {
      * Find Python executable - use explicit path to avoid conflicts
      */
     findPython() {
-        // Use explicit path to avoid MySQL Workbench Python conflict
-        const explicitPath = process.env.PYTHON_PATH || 'C:\\Users\\AH\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
-        const fs = require('fs');
-        if (fs.existsSync(explicitPath)) {
-            return explicitPath;
-        }
-        try {
-            execSync('py -3.12 --version', { stdio: 'pipe' });
-            return 'py';
-        } catch (e) {
-            return 'python';
-        }
+        // Use PYTHON_PATH env variable or fall back to 'python' from system PATH
+        return process.env.PYTHON_PATH || 'python';
     }
 
     /**

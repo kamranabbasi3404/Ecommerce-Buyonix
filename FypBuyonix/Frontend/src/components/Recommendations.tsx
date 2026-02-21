@@ -125,8 +125,8 @@ const Recommendations: React.FC = () => {
     <div className="mb-12">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Recommended For You</h2>
-          <p className="text-gray-600">AI-powered personalized product suggestions</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Personalized for you</h2>
+          <p className="text-gray-600">Based on your interests and preferences</p>
         </div>
       </div>
 

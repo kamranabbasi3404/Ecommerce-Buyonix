@@ -360,7 +360,7 @@ const VisualSearch = ({ isOpen, onClose }: VisualSearchProps) => {
                                                         {result.product.category}
                                                     </p>
                                                     <p className="text-teal-600 font-semibold">
-                                                        Rs. {result.product.price.toLocaleString()}
+                                                        $. {result.product.price.toLocaleString()}
                                                     </p>
                                                 </div>
                                                 <div className="text-right">
