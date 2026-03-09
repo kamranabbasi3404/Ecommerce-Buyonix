@@ -134,7 +134,8 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       'price', 'rate', 'cost', 'tell', 'give', 'show', 'what', 'how', 'much',
       'please', 'can', 'you', 'me', 'the', 'of', 'a', 'an', 'is', 'are', 'for',
       'available', 'availability', 'stock', 'find', 'search', 'get', 'want',
-      'do', 'does', 'have', 'has', 'it', 'in', 'i', 'need', 'looking',
+      'do', 'does', 'have', 'has', 'it', 'in', 'i', 'shoewear', 'need', 'looking',
+      'shoewear', 'need', 'looking', 'shoewear', 'need', 'looking', 'shoewear', 'need', 'looking',
       // Roman Urdu query words
       'kitne', 'kitna', 'kya', 'qeemat', 'daam', 'ka', 'ki', 'ke', 'hai', 'hain',
       'mil', 'milega', 'milta', 'dikhao', 'batao', 'bata', 'dhundo', 'mujhe',
