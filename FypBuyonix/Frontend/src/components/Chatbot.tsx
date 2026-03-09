@@ -363,6 +363,9 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         ? "📦 **Products Dekhna:**\n\n1. **Shop** page pe sab products hain\n2. Search bar se dhundo\n3. Categories se browse karo\n4. Product click karo details ke liye\n5. **'Add to Cart'** ya **'Buy Now'** dabao\n\nVisual Search bhi try karo - photo upload karo similar products milenge!"
         : "📦 **Viewing Products:**\n\n1. All products are on **Shop** page\n2. Use search bar to find\n3. Browse by categories\n4. Click product for details\n5. Click **'Add to Cart'** or **'Buy Now'**\n\nTry Visual Search too - upload a photo to find similar products!";
     }
+    
+    
+    
 
     // ===== DEFAULT FALLBACK =====
     return isUrdu
@@ -661,4 +664,3 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
 };
 
 export default Chatbot;
-
