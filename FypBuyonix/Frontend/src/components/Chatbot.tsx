@@ -31,6 +31,32 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const [isLoading, setIsLoading] = useState(false);
   const [language, setLanguage] = useState<'en' | 'ur'>('en');
 
+  // Category mapping - Maps user queries to actual product categories in database
+  const categoryMapping: { [key: string]: string[] } = {
+    'Footwear': ['shoe', 'shoes', 'shoewear', 'footwear', 'boots', 'sneakers', 'sandals', 'slippers', 'heels', 'loafers', 'trainers', 'joote'],
+    'Sports': ['sports', 'sportswear', 'athletic', 'gym', 'fitness', 'workout', 'activewear', 'sports item'],
+    'Books': ['book', 'books', 'novel', 'novels', 'textbook', 'ebook', 'reading', 'kitaab'],
+    'Toys': ['toy', 'toys', 'game', 'games', 'gaming', 'video game', 'board game', 'console', 'playstation', 'xbox'],
+    'Clothing': ['apparel', 'clothes', 'clothing', 'dress', 'shirt', 'pants', 'trousers', 'top', 'wear', 'fabric', 'kapre'],
+    'Electronics': ['electronic', 'electronics', 'phone', 'laptop', 'computer', 'gadget', 'device'],
+    'Accessories': ['accessories', 'phone accessories', 'phone case', 'charger', 'cable', 'screen protector', 'earphones', 'headphones', 'watch', 'bag', 'belt', 'wallet'],
+    'Beauty': ['beauty', 'cosmetics', 'skincare', 'makeup', 'salon', 'personal care'],
+    'Home & Garden': ['home', 'garden', 'furniture', 'decor', 'home decor', 'gardening'],
+    'Jewelry': ['jewelry', 'jewellery', 'ring', 'necklace', 'bracelet', 'earring', 'diamond'],
+  };
+
+  // Extract category from user query
+  const extractCategory = (message: string): string | null => {
+    const lowerMessage = message.toLowerCase();
+    
+    for (const [category, keywords] of Object.entries(categoryMapping)) {
+      if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+        return category;
+      }
+    }
+    return null;
+  };
+
   // Reset welcome message when language changes
   useEffect(() => {
     setMessages([
@@ -53,24 +79,34 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   }, [messages]);
 
   // Search products from API - fetches all and filters client-side
-  const searchProducts = async (query: string): Promise<Product[]> => {
+  const searchProducts = async (query: string, category?: string): Promise<Product[]> => {
     try {
       // Fetch all products from backend and filter client-side
       const response = await fetch(`http://localhost:5000/product?limit=100`);
       if (!response.ok) return [];
       const data = await response.json();
 
-      // Filter products by name matching the query
       const allProducts = data.products || [];
       const queryLower = query.toLowerCase();
 
+      // If category is provided, do exact category match
+      if (category) {
+        const filtered = allProducts.filter((product: Product) => {
+          const productCategory = product.category || '';
+          // Check if product category matches exactly (case-insensitive)
+          return productCategory.toLowerCase() === category.toLowerCase();
+        });
+        return filtered.slice(0, 8);
+      }
+
+      // Otherwise, filter products by name and category matching the query
       const filtered = allProducts.filter((product: Product) =>
         product.name.toLowerCase().includes(queryLower) ||
         (product.category && product.category.toLowerCase().includes(queryLower))
       );
 
-      // Return top 5 matches
-      return filtered.slice(0, 5);
+      // Return top 8 matches
+      return filtered.slice(0, 8);
     } catch {
       return [];
     }
@@ -115,31 +151,37 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   };
 
 
-  // Check if user is asking about product price/availability
+  // Check if user is asking about product price/availability or categories
   const isProductQuery = (message: string): boolean => {
     const productKeywords = [
       'price', 'rate', 'cost', 'kitne', 'kitna', 'kya price', 'qeemat', 'daam',
       'available', 'availability', 'stock', 'mil', 'milega', 'hai kya', 'hain kya',
-      'show', 'dikhao', 'batao', 'bata', 'find', 'dhundo', 'search'
+      'show', 'dikhao', 'batao', 'bata', 'find', 'dhundo', 'search', 'list', 'all',
+      'sab', 'kya hai', 'kids', 'children', 'mens', 'womens'
     ];
     const lower = message.toLowerCase();
-    return productKeywords.some(keyword => lower.includes(keyword));
+    
+    // Check for keyword match OR category match
+    const hasProductKeyword = productKeywords.some(keyword => lower.includes(keyword));
+    const hasCategory = extractCategory(message) !== null;
+    
+    return hasProductKeyword || hasCategory;
   };
 
-  // Extract product name from query
+  // Extract product name/category from query
   const extractProductName = (message: string): string => {
     // Remove common query words to get product name
     const removeWords = [
       // English query words
       'price', 'rate', 'cost', 'tell', 'give', 'show', 'what', 'how', 'much',
       'please', 'can', 'you', 'me', 'the', 'of', 'a', 'an', 'is', 'are', 'for',
-      'available', 'availability', 'stock', 'find', 'search', 'get', 'want',
+      'available', 'availability', 'stock', 'find', 'search', 'get', 'want', 'all',
       'do', 'does', 'have', 'has', 'it', 'in', 'i', 'shoewear', 'need', 'looking',
-      'shoewear', 'need', 'looking', 'shoewear', 'need', 'looking', 'shoewear', 'need', 'looking',
+      'list', 'items', 'products', 'any', 'every', 'each', 'kinds', 'types',
       // Roman Urdu query words
       'kitne', 'kitna', 'kya', 'qeemat', 'daam', 'ka', 'ki', 'ke', 'hai', 'hain',
       'mil', 'milega', 'milta', 'dikhao', 'batao', 'bata', 'dhundo', 'mujhe',
-      'ko', 'wala', 'wali', 'karo', 'chahiye', 'lena', 'dena'
+      'ko', 'wala', 'wali', 'karo', 'chahiye', 'lena', 'dena', 'sab', 'se', 'mein'
     ];
 
     let cleaned = message.toLowerCase();
@@ -244,15 +286,15 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     if (lowerMessage.includes('search') || lowerMessage.includes('dhundo') || lowerMessage.includes('kaise dhunde') ||
       lowerMessage.includes('product kahan') || lowerMessage.includes('browse') || lowerMessage.includes('find product')) {
       return isUrdu
-        ? "🔎 **Product Kaise Dhundein:**\n\n**Text Search:**\n• Search bar mein naam likho\n• Enter dabao\n\n**Visual Search:**\n• Camera icon 📷 click karo\n• Photo upload karo, similar products milenge!\n\n**Browse:**\n• **Shop** page pe sab products hain\n• Category, price, rating se filter karo"
-        : "🔎 **Finding Products:**\n\n**Text Search:**\n• Use the search bar at top\n• Type product name\n\n**Visual Search:**\n• Click 📷 camera icon\n• Upload image to find similar products!\n\n**Browse:**\n• Visit **Shop** page for all products\n• Filter by category, price, rating";
+        ? "🔎 **Product Search Kaise Karein:**\n\n**Text Search:**\n• Search bar mein product ya category naam likho\n• Enter dabao\n\n**Category Search (NEW!):**\n• 'Show all footwear' likho\n• 'List sports' likho\n• 'Books dikha' likho\n• 'Jewelry' likho\n• 'Accessories dikhao'\n\n**Visual Search:**\n• Camera icon 📷 click karo\n• Photo upload karo, similar products milenge!\n\n**Browse:**\n• **Shop** page pe sab products hain\n• Category, price, rating se filter karo\n\n**Categories Available:**\n👟 Footwear | 🏃 Sports | 📚 Books | 🎮 Toys | 👕 Clothing | 📱 Electronics | 💄 Beauty | 💍 Jewelry | 🏠 Home & Garden | 🎁 Accessories"
+        : "🔎 **How to Find Products:**\n\n**Text Search:**\n• Type in the search bar\n• Search by product name or category\n\n**Category Search (NEW!):**\n• 'Show all shoes' or 'footwear'\n• 'List sports items' or 'sports'\n• 'Books available?'\n• 'Jewelry'\n• 'Accessories' or 'phone accessories'\n\n**Visual Search:**\n• Click 📷 camera icon\n• Upload image to find similar products!\n\n**Browse:**\n• Visit **Shop** page for all products\n• Filter by category, price, rating\n\n**Available Categories:**\n👟 Footwear | 🏃 Sports | 📚 Books | 🎮 Toys | 👕 Clothing | 📱 Electronics | 💄 Beauty | 💍 Jewelry | 🏠 Home & Garden | 🎁 Accessories";
     }
 
     // ===== CATEGORIES =====
     if (lowerMessage.includes('category') || lowerMessage.includes('categories') || lowerMessage.includes('kya milta')) {
       return isUrdu
-        ? "📁 **Product Categories:**\n\n• Electronics (phones, laptops)\n• Fashion (kapre, joote, bags)\n• Home & Living (furniture, decor)\n• Beauty & Health\n• Sports\n• Books\n• Aur bohot kuch!\n\n**Shop** page ya navbar se categories browse karo."
-        : "📁 **Product Categories:**\n\n• Electronics (phones, laptops, accessories)\n• Fashion (clothing, shoes, bags)\n• Home & Living (furniture, decor)\n• Beauty & Health\n• Sports & Outdoors\n• Books & Stationery\n• And more!\n\nBrowse from **Shop** page or navbar.";
+        ? "📁 **Product Categories - Available:**\n\n• 👟 **Footwear** - sab tarah ke joote\n• 🏃 **Sports** - gym, sports, fitness items\n• 📚 **Books** - novels, textbooks, educational\n• 🎮 **Toys** - toys, games, video games\n• 👕 **Clothing** - kapre, shirts, pants\n• 📱 **Electronics** - phones, laptops, gadgets\n• 💄 **Beauty** - cosmetics, skincare, makeup\n• 💍 **Jewelry** - rings, necklaces, earrings\n• 🏠 **Home & Garden** - furniture, decor\n• 🎁 **Accessories** - phone cases, chargers, headphones\n\n**Try asking:**\n• 'Show all shoes' / 'Sab joote'\n• 'List sports' / 'Sports items'\n• 'Books dikhao' / 'Show books'\n• 'Phone accessories' / 'Earphones'\n• 'Jewelry dikha'\n\nShop page ya navbar se bhi browse kar sakte ho!"
+        : "📁 **Product Categories - Available:**\n\n• 👟 **Footwear** - all types of shoes\n• 🏃 **Sports** - gym, sports, fitness items\n• 📚 **Books** - novels, textbooks, educational\n• 🎮 **Toys** - toys, games, video games\n• 👕 **Clothing** - clothing, shirts, pants\n• 📱 **Electronics** - phones, laptops, gadgets\n• 💄 **Beauty** - cosmetics, skincare, makeup\n• 💍 **Jewelry** - rings, necklaces, earrings\n• 🏠 **Home & Garden** - furniture, decor\n• 🎁 **Accessories** - phone cases, chargers, headphones\n\n**Try asking:**\n• 'Show all shoes'\n• 'List sports items'\n• 'Books available?'\n• 'Phone accessories'\n• 'Jewelry items'\n\nYou can also browse from the **Shop** page or navbar!";
     }
 
     // ===== ACCOUNT & PROFILE =====
@@ -404,9 +446,16 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       }]);
 
       try {
+        // Try to extract category first
+        const detectedCategory = extractCategory(userText);
         const productName = extractProductName(userText);
-        if (productName.length > 1) {
-          const products = await searchProducts(productName);
+
+        if (detectedCategory || productName.length > 1) {
+          // Use category search if category detected, otherwise use product name
+          const products = detectedCategory 
+            ? await searchProducts(detectedCategory, detectedCategory)
+            : await searchProducts(productName);
+
           // Remove loading message and add result
           setMessages((prev) => prev.filter(m => m.id !== loadingId).concat({
             id: (Date.now() + 2).toString(),
@@ -419,8 +468,8 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           setMessages((prev) => prev.filter(m => m.id !== loadingId).concat({
             id: (Date.now() + 2).toString(),
             text: isUrdu
-              ? '🤔 Konsa product dekhna hai? Naam batao jaise "iPhone price" ya "laptop stock"'
-              : '🤔 Which product are you looking for? Try "iPhone price" or "laptop stock"',
+              ? '🤔 Konsa product ya category? Jaise "shoewear dikha", "sports items" ya "phone accessories dikhao"'
+              : '🤔 Which product or category? Try "show shoes", "sports items" or "phone accessories"',
             sender: 'bot',
             timestamp: new Date(),
           }));
@@ -482,7 +531,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   return (
     <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-white rounded-lg shadow-2xl z-50 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-teal-600 to-teal-400 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
             <svg
@@ -645,7 +694,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             <svg
               className="w-5 h-5"
               fill="none"
-              stroke="currentColor"
+              stroke="currentColor" 
               viewBox="0 0 24 24"
             >
               <path

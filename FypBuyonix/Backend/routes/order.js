@@ -12,6 +12,10 @@ const generateOrderNumber = () => {
   return `ORD-${timestamp}-${random}`;
 };
 
+// Track recent order attempts to prevent duplicates (in-memory cache)
+const recentOrders = new Map();
+const DUPLICATE_PREVENTION_WINDOW = 5000; // 5 seconds
+
 // Create Order
 router.post('/create', async (req, res) => {
   try {
@@ -21,6 +25,21 @@ router.post('/create', async (req, res) => {
     if (!customerInfo || !items || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
+
+    // ✅ DUPLICATE PREVENTION: Check if same customer email placed order within 5 seconds
+    const orderKey = `${customerInfo.email}_${paymentMethod}`;
+    const lastOrderTime = recentOrders.get(orderKey);
+    
+    if (lastOrderTime && (Date.now() - lastOrderTime) < DUPLICATE_PREVENTION_WINDOW) {
+      console.warn(`⚠️ DUPLICATE ORDER ATTEMPT: ${customerInfo.email} tried to place order ${Date.now() - lastOrderTime}ms after previous attempt`);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Order already being processed. Please wait a moment before trying again.' 
+      });
+    }
+
+    // ✅ MARK THIS ORDER ATTEMPT
+    recentOrders.set(orderKey, Date.now());
 
     // Create order
     const orderNumber = generateOrderNumber();

@@ -33,6 +33,9 @@ const BuyNow: React.FC = () => {
   // Stripe state
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [stripeError, setStripeError] = useState<string>('');
+  
+  // Order submission state - prevent multiple clicks
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -160,6 +163,12 @@ const BuyNow: React.FC = () => {
   const handlePlaceOrder = async (e: React.FormEvent, skipCardCheck = false) => {
     e.preventDefault();
 
+    // ✅ PREVENT MULTIPLE SUBMISSIONS
+    if (isSubmitting) {
+      console.warn('⚠️ Order already being submitted, please wait...');
+      return;
+    }
+
     const localLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     if (!localLoggedIn) {
       const currentPath = window.location.pathname + window.location.search;
@@ -185,6 +194,9 @@ const BuyNow: React.FC = () => {
       alert(`⚠️ Please enter your ${formData.paymentMethod === 'easypaisa' ? 'EasyPaisa' : 'JazzCash'} Transaction ID to proceed.`);
       return;
     }
+
+    // ✅ SET SUBMITTING STATE - DISABLE BUTTON
+    setIsSubmitting(true);
 
     try {
       const orderData = {
@@ -219,7 +231,7 @@ const BuyNow: React.FC = () => {
       }
 
       const result = await response.json();
-      console.log('Order placed successfully:', result);
+      console.log('✅ Order placed successfully:', result);
 
       for (const item of cartItems) {
         await trackPurchase(item._id);
@@ -229,10 +241,14 @@ const BuyNow: React.FC = () => {
         cartContext.clearCart();
       }
 
+      // ✅ RESET STATE BEFORE NAVIGATION
+      setIsSubmitting(false);
       navigate('/order-confirmation');
     } catch (error) {
-      console.error('Error placing order:', error);
+      console.error('❌ Error placing order:', error);
       alert('Failed to place order. Please try again.');
+      // ✅ RESET STATE ON ERROR - ALLOW USER TO RETRY
+      setIsSubmitting(false);
     }
   };
 
@@ -526,9 +542,24 @@ const BuyNow: React.FC = () => {
               ) : (
                 <button
                   onClick={handlePlaceOrder}
-                  className="w-full bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition-colors"
+                  disabled={isSubmitting}
+                  className={`w-full font-bold py-3 rounded-lg transition-all ${
+                    isSubmitting
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer'
+                  }`}
                 >
-                  Place Order
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing Order...
+                    </span>
+                  ) : (
+                    'Place Order'
+                  )}
                 </button>
               )}
             </div>
