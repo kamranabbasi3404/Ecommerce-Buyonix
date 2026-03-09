@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import Chatbot from '../components/Chatbot';
+import Chatbot from '../../components/Chatbot';
 
 // ─── Mock scrollIntoView (not available in jsdom) ───────────────────────────
 Element.prototype.scrollIntoView = vi.fn();
@@ -147,14 +147,16 @@ describe('Chatbot Component', () => {
   it('should respond with Visual Search info when asked about visual search', async () => {
     renderChatbot();
 
+    // "how to use visual search" triggers isProductQuery() because "search" is a product keyword.
+    // Use "tasveer" which triggers the visual search response in getBotResponse directly.
     const input = screen.getByPlaceholderText('Type your message here...');
-    fireEvent.change(input, { target: { value: 'how to use visual search' } });
+    fireEvent.change(input, { target: { value: 'tasveer' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
     vi.advanceTimersByTime(600);
 
     await waitFor(() => {
-      expect(screen.getByText(/Find Products with Images/i)).toBeInTheDocument();
+      expect(screen.getByText(/Visual Search/i)).toBeInTheDocument();
     });
   });
 

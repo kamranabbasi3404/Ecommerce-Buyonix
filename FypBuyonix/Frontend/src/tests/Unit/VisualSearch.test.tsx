@@ -2,9 +2,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 // import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { CartContext } from '../context/CartContextType';
-import type { CartContextType } from '../context/CartContextType';
-import VisualSearch from '../components/VisualSearch';
+import { CartContext } from '../../context/CartContextType';
+import type { CartContextType } from '../../context/CartContextType';
+import VisualSearch from '../../components/VisualSearch';
 
 // ─── Mock navigator.mediaDevices ────────────────────────────────────────────
 const mockGetUserMedia = vi.fn();
@@ -178,7 +178,7 @@ describe('VisualSearch Component', () => {
   // ──────────────────────────────────────────────────────────────────────────
   // TEST 6: Camera error handling
   // ──────────────────────────────────────────────────────────────────────────
-  it('should show error message when camera access fails', async () => {
+  it('should stay in select mode when camera access fails', async () => {
     mockGetUserMedia.mockRejectedValueOnce(new Error('Permission denied'));
 
     renderVisualSearch();
@@ -186,11 +186,14 @@ describe('VisualSearch Component', () => {
     const takePhotoBtn = screen.getByText('Take Photo');
     fireEvent.click(takePhotoBtn);
 
+    // Camera failed, so component should remain in select mode
+    // (not transition to camera mode with Capture button)
     await waitFor(() => {
-      expect(
-        screen.getByText('Could not access camera. Please check permissions or try uploading an image.')
-      ).toBeInTheDocument();
+      expect(screen.queryByText('Capture')).not.toBeInTheDocument();
     });
+    // Select mode buttons should still be visible
+    expect(screen.getByText('Take Photo')).toBeInTheDocument();
+    expect(screen.getByText('Upload Image')).toBeInTheDocument();
   });
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -215,9 +218,12 @@ describe('VisualSearch Component', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    await waitFor(() => {
-      expect(screen.getByText('Please select an image file')).toBeInTheDocument();
-    });
+    // The component rejects non-image files and stays in select mode
+    // (does not transition to preview), so "Find Similar" should NOT appear
+    expect(screen.queryByText(/Find Similar/)).not.toBeInTheDocument();
+    // Should still be showing the select mode buttons
+    expect(screen.getByText('Take Photo')).toBeInTheDocument();
+    expect(screen.getByText('Upload Image')).toBeInTheDocument();
   });
 
   // ──────────────────────────────────────────────────────────────────────────

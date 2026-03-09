@@ -1,9 +1,9 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { CartContext } from '../context/CartContextType';
-import type { CartContextType } from '../context/CartContextType';
-import Recommendations from '../components/Recommendations';
+import { CartContext } from '../../context/CartContextType';
+import type { CartContextType } from '../../context/CartContextType';
+import Recommendations from '../../components/Recommendations';
 
 // ─── Mock Data ──────────────────────────────────────────────────────────────
 const mockRecommendations = [
