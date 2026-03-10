@@ -83,7 +83,7 @@ const Recommendations: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Recommended For You</h2>
-            <p className="text-gray-600">AI-powered personalized product suggestions</p>
+            <p className="text-gray-600">AI-Based personalized product suggestions</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
