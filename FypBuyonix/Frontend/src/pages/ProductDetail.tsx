@@ -180,10 +180,13 @@ const ProductDetail = () => {
     const handleAddToCart = () => {
         if (!product || !cartContext) return;
 
+        // Use bargained price if bargaining was completed, otherwise use original price
+        const finalPrice = bargainedPrice && bargainedPrice < product.price ? bargainedPrice : product.price;
+
         cartContext.addToCart({
             _id: product._id,
             name: product.name,
-            price: product.price,
+            price: finalPrice,
             quantity: quantity,
             images: product.images,
         });
@@ -297,9 +300,16 @@ const ProductDetail = () => {
                     localStorage.setItem(BARGAINED_PRODUCTS_KEY, JSON.stringify(validEntries));
                 }
 
-                setIsBargainCompleted(
-                    validEntries.some((e: { productId: string }) => e.productId === product._id)
+                const bargainEntry = validEntries.find(
+                    (e: { productId: string; price?: number }) => e.productId === product._id
                 );
+                if (bargainEntry) {
+                    setIsBargainCompleted(true);
+                    // Restore bargained price from storage
+                    if (bargainEntry.price && bargainEntry.price < product.price) {
+                        setBargainedPrice(bargainEntry.price);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error checking bargained products:', error);
@@ -336,21 +346,22 @@ const ProductDetail = () => {
     }
 
 
-    // Mark product as bargained (with timestamp for 10-day expiry)
-    const markProductAsBargained = (productId: string) => {
+    // Mark product as bargained (with timestamp and price for 10-day expiry)
+    const markProductAsBargained = (productId: string, price?: number) => {
         try {
             const stored = localStorage.getItem(BARGAINED_PRODUCTS_KEY);
-            let entries: { productId: string; timestamp: number }[] = stored ? JSON.parse(stored) : [];
+            let entries: { productId: string; timestamp: number; price?: number }[] = stored ? JSON.parse(stored) : [];
 
             // Migrate old format if needed
             if (entries.length > 0 && typeof entries[0] === 'string') {
                 entries = (entries as unknown as string[]).map(id => ({ productId: id, timestamp: Date.now() }));
             }
 
-            if (!entries.some(e => e.productId === productId)) {
-                entries.push({ productId, timestamp: Date.now() });
-                localStorage.setItem(BARGAINED_PRODUCTS_KEY, JSON.stringify(entries));
-            }
+            // Remove existing entry for this product (to update price)
+            entries = entries.filter(e => e.productId !== productId);
+            entries.push({ productId, timestamp: Date.now(), price });
+            localStorage.setItem(BARGAINED_PRODUCTS_KEY, JSON.stringify(entries));
+
             setIsBargainCompleted(true);
         } catch (error) {
             console.error('Error saving bargained product:', error);
@@ -411,11 +422,12 @@ const ProductDetail = () => {
                 setBargainMessages((prev) => [...prev, { sender: 'ai', text: data.aiResponse }]);
                 if (data.accepted) {
                     setBargainAttempts(0);
-                    markProductAsBargained(product._id);
                     if (data.finalPrice && data.finalPrice < product.price) {
                         setBargainedPrice(data.finalPrice);
+                        markProductAsBargained(product._id, data.finalPrice);
                         setTimeout(() => {
-                            alert(`🎉 Congratulations! You can buy at $${data.finalPrice.toFixed(2)} (${data.discountPercentage}% off)`);
+                            const disc = ((product.price - data.finalPrice) / product.price * 100).toFixed(1);
+                            alert(`🎉 Congratulations! You can buy at $${data.finalPrice.toFixed(2)} (${disc}% off)`);
                         }, 500);
                     }
                 } else {
@@ -455,7 +467,7 @@ const ProductDetail = () => {
             setBargainAttempts((prev) => (accepted ? 0 : Math.max(0, prev - 1)));
 
             if (accepted && finalPrice < product.price) {
-                markProductAsBargained(product._id);
+                markProductAsBargained(product._id, finalPrice);
                 setBargainedPrice(finalPrice);
                 setTimeout(() => {
                     const discount = ((product.price - finalPrice) / product.price * 100).toFixed(1);
@@ -612,13 +624,25 @@ const ProductDetail = () => {
 
                         {/* Price */}
                         <div className="flex items-center gap-2 mb-3">
-                            <span className="text-2xl font-bold text-teal-600">${product.price.toFixed(2)}</span>
-                            {product.originalPrice && product.originalPrice > product.price && (
+                            {bargainedPrice && bargainedPrice < product.price ? (
                                 <>
-                                    <span className="text-base text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
-                                    <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                                        -{product.discount}%
+                                    <span className="text-2xl font-bold text-green-600">${bargainedPrice.toFixed(2)}</span>
+                                    <span className="text-base text-gray-400 line-through">${product.price.toFixed(2)}</span>
+                                    <span className="bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                                        Bargain Deal! -{((product.price - bargainedPrice) / product.price * 100).toFixed(0)}%
                                     </span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-2xl font-bold text-teal-600">${product.price.toFixed(2)}</span>
+                                    {product.originalPrice && product.originalPrice > product.price && (
+                                        <>
+                                            <span className="text-base text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
+                                            <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                                                -{product.discount}%
+                                            </span>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </div>

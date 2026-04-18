@@ -60,15 +60,26 @@ class VisualSearchHelper {
      * Start the Flask server as a background process
      */
     startServer() {
-        const pythonCmd = this.findPython();
-        const args = pythonCmd === 'py' ? ['-3.12', this.serverScript] : [this.serverScript];
+        try {
+            const pythonCmd = this.findPython();
+            const args = pythonCmd === 'py' ? ['-3.12', this.serverScript] : [this.serverScript];
 
-        this.serverProcess = spawn(pythonCmd, args, {
-            detached: true,
-            stdio: 'ignore'
-        });
+            this.serverProcess = spawn(pythonCmd, args, {
+                detached: true,
+                stdio: 'ignore'
+            });
 
-        this.serverProcess.unref();
+            // Prevent unhandled error events from crashing Node.js/nodemon
+            this.serverProcess.on('error', (err) => {
+                console.warn('⚠️ Visual search server failed to start:', err.message);
+                this.serverProcess = null;
+            });
+
+            this.serverProcess.unref();
+        } catch (err) {
+            console.warn('⚠️ Could not spawn visual search server:', err.message);
+            this.serverProcess = null;
+        }
     }
 
     /**

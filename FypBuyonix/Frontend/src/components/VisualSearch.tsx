@@ -18,6 +18,7 @@ interface SearchResult {
         description?: string;
     };
     similarity: number;
+    matchType?: 'exact' | 'similar' | 'related';
 }
 
 const VisualSearch = ({ isOpen, onClose }: VisualSearchProps) => {
@@ -144,7 +145,7 @@ const VisualSearch = ({ isOpen, onClose }: VisualSearchProps) => {
             if (data.success) {
                 setResults(data.results);
                 if (data.results.length === 0) {
-                    setError('No similar products found. Try a different image.');
+                    setError(data.message || 'No matching products found for this image. Try a different image.');
                 }
             } else {
                 setError(data.message || 'Search failed. Please try again.');
@@ -330,7 +331,7 @@ const VisualSearch = ({ isOpen, onClose }: VisualSearchProps) => {
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-semibold text-gray-800">
-                                            Similar Products ({results.length})
+                                            Found {results.length} Products
                                         </h3>
                                         <button
                                             onClick={resetSearch}
@@ -341,35 +342,50 @@ const VisualSearch = ({ isOpen, onClose }: VisualSearchProps) => {
                                     </div>
 
                                     <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                                        {results.map((result) => (
-                                            <div
-                                                key={result.product._id}
-                                                onClick={() => buyProduct(result.product)}
-                                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-teal-50 cursor-pointer transition-colors border-2 border-transparent hover:border-teal-300"
-                                            >
-                                                <img
-                                                    src={result.product.images[0]}
-                                                    alt={result.product.name}
-                                                    className="w-16 h-16 object-cover rounded-lg"
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-medium text-gray-800 truncate">
-                                                        {result.product.name}
-                                                    </h4>
-                                                    <p className="text-sm text-gray-500">
-                                                        {result.product.category}
-                                                    </p>
-                                                    <p className="text-teal-600 font-semibold">
-                                                        $. {result.product.price.toLocaleString()}
-                                                    </p>
+                                        {results.map((result) => {
+                                            // Smart badge based on match type
+                                            const matchLabel =
+                                                result.matchType === 'exact' ? 'Exact Match' :
+                                                result.matchType === 'similar' ? 'Similar' :
+                                                'Related';
+                                            const matchColor =
+                                                result.matchType === 'exact' ? 'bg-green-100 text-green-700' :
+                                                result.matchType === 'similar' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-orange-100 text-orange-700';
+
+                                            return (
+                                                <div
+                                                    key={result.product._id}
+                                                    onClick={() => buyProduct(result.product)}
+                                                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-teal-50 cursor-pointer transition-colors border-2 border-transparent hover:border-teal-300"
+                                                >
+                                                    <img
+                                                        src={result.product.images[0]}
+                                                        alt={result.product.name}
+                                                        className="w-16 h-16 object-cover rounded-lg"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="font-medium text-gray-800 truncate">
+                                                            {result.product.name}
+                                                        </h4>
+                                                        <p className="text-sm text-gray-500">
+                                                            {result.product.category}
+                                                        </p>
+                                                        <p className="text-teal-600 font-semibold">
+                                                            $. {result.product.price.toLocaleString()}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right space-y-1">
+                                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${matchColor}`}>
+                                                            {matchLabel}
+                                                        </span>
+                                                        <p className="text-xs text-gray-400">
+                                                            {Math.round(result.similarity * 100)}%
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className="inline-block px-2 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-medium">
-                                                        {Math.round(result.similarity * 100)}% match
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import buyonixLogo from '../assets/logo.png';
 
 interface Message {
   id: string;
@@ -21,7 +22,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '👋 Assalam o Alaikum! Main Buyonix Assistant hoon. Mujh se products ki price, availability ya koi bhi sawal pucho!',
+      text: '👋 Hello! I\'m the Buyonix Assistant. Ask me about product prices, availability, or anything else!',
       sender: 'bot',
       timestamp: new Date(),
     },
@@ -29,19 +30,18 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const [inputMessage, setInputMessage] = useState('');
   const [helpfulResponse, setHelpfulResponse] = useState<{ [key: string]: 'yes' | 'no' | null }>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState<'en' | 'ur'>('en');
 
   // Category mapping - Maps user queries to actual product categories in database
   const categoryMapping: { [key: string]: string[] } = {
-    'Footwear': ['shoe', 'shoes', 'shoewear', 'footwear', 'boots', 'sneakers', 'sandals', 'slippers', 'heels', 'loafers', 'trainers', 'joote'],
-    'Sports': ['sports', 'sportswear', 'athletic', 'gym', 'fitness', 'workout', 'activewear', 'sports item'],
-    'Books': ['book', 'books', 'novel', 'novels', 'textbook', 'ebook', 'reading', 'kitaab'],
-    'Toys': ['toy', 'toys', 'game', 'games', 'gaming', 'video game', 'board game', 'console', 'playstation', 'xbox'],
-    'Clothing': ['apparel', 'clothes', 'clothing', 'dress', 'shirt', 'pants', 'trousers', 'top', 'wear', 'fabric', 'kapre'],
-    'Electronics': ['electronic', 'electronics', 'phone', 'laptop', 'computer', 'gadget', 'device'],
+    'Footwear': ['shoe', 'shoes', 'shoewear', 'footwear', 'boots', 'sneakers', 'sandals', 'slippers', 'heels', 'loafers', 'trainers'],
+    'Sports': ['sports', 'sportswear', 'athletic', 'gym', 'fitness', 'workout', 'activewear', 'sports item', 'skateboard', 'hockey', 'cricket', 'football', 'basketball', 'volleyball', 'baseball', 'tennis', 'badminton'],
+    'Books': ['book', 'books', 'novel', 'novels', 'textbook', 'ebook', 'reading'],
+    'Toys': ['toy', 'toys', 'game', 'games', 'gaming', 'video game', 'board game', 'console', 'playstation', 'xbox', 'rubik'],
+    'Clothing': ['apparel', 'clothes', 'clothing', 'dress', 'shirt', 'pants', 'trousers', 'top', 'wear', 'fabric', 'jeans', 'jacket', 'hoodie', 'sweater', 'shalwar', 'kameez', 'kurta'],
+    'Electronics': ['electronic', 'electronics', 'phone', 'laptop', 'computer', 'gadget', 'device', 'tablet', 'tv', 'camera'],
     'Accessories': ['accessories', 'phone accessories', 'phone case', 'charger', 'cable', 'screen protector', 'earphones', 'headphones', 'watch', 'bag', 'belt', 'wallet'],
-    'Beauty': ['beauty', 'cosmetics', 'skincare', 'makeup', 'salon', 'personal care'],
-    'Home & Garden': ['home', 'garden', 'furniture', 'decor', 'home decor', 'gardening'],
+    'Beauty': ['beauty', 'cosmetics', 'skincare', 'makeup', 'salon', 'personal care', 'lipstick', 'foundation', 'mascara'],
+    'Home & Garden': ['home', 'garden', 'furniture', 'decor', 'home decor', 'gardening', 'fan', 'lamp', 'curtain'],
     'Jewelry': ['jewelry', 'jewellery', 'ring', 'necklace', 'bracelet', 'earring', 'diamond'],
   };
 
@@ -57,20 +57,6 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     return null;
   };
 
-  // Reset welcome message when language changes
-  useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        text: language === 'ur'
-          ? '👋 Assalam o Alaikum! Main Buyonix Assistant hoon. Mujh se products ki price, availability ya koi bhi sawal pucho!'
-          : '👋 Hello! I\'m the Buyonix Assistant. Ask me about product prices, availability, or anything else!',
-        sender: 'bot',
-        timestamp: new Date(),
-      },
-    ]);
-    setHelpfulResponse({});
-  }, [language]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -93,7 +79,6 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       if (category) {
         const filtered = allProducts.filter((product: Product) => {
           const productCategory = product.category || '';
-          // Check if product category matches exactly (case-insensitive)
           return productCategory.toLowerCase() === category.toLowerCase();
         });
         return filtered.slice(0, 8);
@@ -105,6 +90,18 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         (product.category && product.category.toLowerCase().includes(queryLower))
       );
 
+      // If no results, try matching individual words from the query
+      if (filtered.length === 0 && queryLower.includes(' ')) {
+        const words = queryLower.split(' ').filter((w: string) => w.length > 2);
+        const wordMatched = allProducts.filter((product: Product) =>
+          words.some((word: string) =>
+            product.name.toLowerCase().includes(word) ||
+            (product.category && product.category.toLowerCase().includes(word))
+          )
+        );
+        return wordMatched.slice(0, 8);
+      }
+
       // Return top 8 matches
       return filtered.slice(0, 8);
     } catch {
@@ -112,24 +109,18 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     }
   };
 
-  // Format product info for display - bilingual
-  const formatProductInfo = (products: Product[], isUrdu: boolean): string => {
+  // Format product info for display
+  const formatProductInfo = (products: Product[]): string => {
     if (products.length === 0) {
-      return isUrdu
-        ? "❌ Is naam ka koi product nahi mila. Doosra naam try karo ya **Shop** page pe browse karo."
-        : "❌ No products found with that name. Try a different search or browse the **Shop** page.";
+      return "❌ No products found with that name. Try a different search or browse the **Shop** page.";
     }
 
-    let response = isUrdu
-      ? `🛍️ **${products.length} Product${products.length > 1 ? 's' : ''} Mil Gaye:**\n\n`
-      : `🛍️ **${products.length} Product${products.length > 1 ? 's' : ''} Found:**\n\n`;
+    let response = `🛍️ **${products.length} Product${products.length > 1 ? 's' : ''} Found:**\n\n`;
 
     products.forEach((product, index) => {
       const availability = product.stock !== undefined
-        ? (product.stock > 0
-          ? (isUrdu ? `✅ Stock mein (${product.stock} available)` : `✅ In Stock (${product.stock} available)`)
-          : (isUrdu ? '❌ Stock mein nahi' : '❌ Out of Stock'))
-        : (isUrdu ? '✅ Available hai' : '✅ Available');
+        ? (product.stock > 0 ? `✅ In Stock (${product.stock} available)` : '❌ Out of Stock')
+        : '✅ Available';
 
       const priceDisplay = product.discount && product.originalPrice
         ? `~~$${product.originalPrice}~~ **$${product.price}** (${product.discount}% OFF)`
@@ -144,9 +135,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       response += '\n';
     });
 
-    response += isUrdu
-      ? "🛒 Product khareedne ke liye **Shop** page pe jao!"
-      : "🛒 Visit the **Shop** page to buy these products!";
+    response += "🛒 Visit the **Shop** page to buy these products!";
     return response;
   };
 
@@ -154,265 +143,173 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   // Check if user is asking about product price/availability or categories
   const isProductQuery = (message: string): boolean => {
     const productKeywords = [
-      'price', 'rate', 'cost', 'kitne', 'kitna', 'kya price', 'qeemat', 'daam',
-      'available', 'availability', 'stock', 'mil', 'milega', 'hai kya', 'hain kya',
-      'show', 'dikhao', 'batao', 'bata', 'find', 'dhundo', 'search', 'list', 'all',
-      'sab', 'kya hai', 'kids', 'children', 'mens', 'womens'
+      'price', 'rate', 'cost', 'how much',
+      'available', 'availability', 'stock', 'in stock',
+      'show', 'find', 'search', 'list', 'all',
+      'what is', 'kids', 'children', 'mens', 'womens'
     ];
     const lower = message.toLowerCase();
     
-    // Check for keyword match OR category match
     const hasProductKeyword = productKeywords.some(keyword => lower.includes(keyword));
     const hasCategory = extractCategory(message) !== null;
     
     return hasProductKeyword || hasCategory;
   };
 
-  // Extract product name/category from query
+  // Extract product name from query
   const extractProductName = (message: string): string => {
-    // Remove common query words to get product name
     const removeWords = [
-      // English query words
       'price', 'rate', 'cost', 'tell', 'give', 'show', 'what', 'how', 'much',
       'please', 'can', 'you', 'me', 'the', 'of', 'a', 'an', 'is', 'are', 'for',
       'available', 'availability', 'stock', 'find', 'search', 'get', 'want', 'all',
-      'do', 'does', 'have', 'has', 'it', 'in', 'i', 'shoewear', 'need', 'looking',
+      'do', 'does', 'have', 'has', 'it', 'in', 'i', 'need', 'looking',
       'list', 'items', 'products', 'any', 'every', 'each', 'kinds', 'types',
-      // Roman Urdu query words
-      'kitne', 'kitna', 'kya', 'qeemat', 'daam', 'ka', 'ki', 'ke', 'hai', 'hain',
-      'mil', 'milega', 'milta', 'dikhao', 'batao', 'bata', 'dhundo', 'mujhe',
-      'ko', 'wala', 'wali', 'karo', 'chahiye', 'lena', 'dena', 'sab', 'se', 'mein'
+      'this', 'that', 'these', 'those', 'there', 'here', 'about'
     ];
 
     let cleaned = message.toLowerCase();
 
-    // Remove each word one by one with word boundaries
     removeWords.forEach(word => {
-      // Use word boundary but be careful with short words
       const regex = new RegExp(`\\b${word}\\b`, 'gi');
       cleaned = cleaned.replace(regex, '');
     });
 
-    // Clean up extra spaces, punctuation and return
     return cleaned.replace(/[?!.,]/g, '').replace(/\s+/g, ' ').trim();
   };
-  // Handle bot responses - Bilingual: Responds in user's selected language
+
+  // Handle bot responses
   const getBotResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
-    const isUrdu = language === 'ur';
 
     // ===== VISUAL SEARCH =====
-    if (lowerMessage.includes('visual search') || lowerMessage.includes('image search') || lowerMessage.includes('camera search') ||
-      lowerMessage.includes('tasveer') || lowerMessage.includes('photo se') || lowerMessage.includes('image se dhundo')) {
-      return isUrdu
-        ? "🔍 **Visual Search** - Tasveer se Product Dhundo!\n\n**Kaise use karein:**\n1. Search bar mein **camera icon** 📷 click karo\n2. Koi bhi product ki photo upload karo\n3. AI similar products dhundh lega!\n\nBohot useful hai jab product ka naam nahi pata!"
-        : "🔍 **Visual Search** - Find Products with Images!\n\n**How to use:**\n1. Click the **camera icon** 📷 in search bar\n2. Upload any product image\n3. AI will find similar products!\n\nPerfect when you don't know the product name!";
+    if (lowerMessage.includes('visual search') || lowerMessage.includes('image search') || lowerMessage.includes('camera search')) {
+      return "🔍 **Visual Search** - Find Products with Images!\n\n**How to use:**\n1. Click the **camera icon** 📷 in search bar\n2. Upload any product image\n3. AI will find similar products!\n\nPerfect when you don't know the product name!";
     }
 
     // ===== BARGAINING =====
-    if (lowerMessage.includes('bargain') || lowerMessage.includes('negotiate') || lowerMessage.includes('mol tol') ||
-      lowerMessage.includes('price kam') || lowerMessage.includes('qeemat kam') || lowerMessage.includes('rate kam')) {
-      return isUrdu
-        ? "💰 **Mol Tol / Bargaining** - Seller se Rate Negotiate Karo!\n\n**Kaise karein:**\n1. Product page pe jao\n2. **'Bargain Price'** button click karo\n3. Apni offer price likho\n4. Seller accept/reject/counter karega\n5. Real-time chat mein deal pakki karo!\n\nPaise bachao direct seller se deal karke!"
-        : "💰 **Smart Bargaining** - Negotiate Prices!\n\n**How it works:**\n1. Go to any product page\n2. Click **'Bargain Price'** button\n3. Enter your offer price\n4. Seller will accept, reject, or counter-offer\n5. Chat in real-time until you agree!\n\nSave money by negotiating directly!";
+    if (lowerMessage.includes('bargain') || lowerMessage.includes('negotiate') || lowerMessage.includes('price lower')) {
+      return "💰 **Smart Bargaining** - Negotiate Prices!\n\n**How it works:**\n1. Go to any product page\n2. Click **'Smart Bargaining'** button\n3. Enter your offer price\n4. AI will accept, reject, or counter-offer\n5. Get the best deal!\n\nSave money by negotiating with our AI!";
     }
 
     // ===== SELLER / BECOME SELLER =====
-    if (lowerMessage.includes('become seller') || lowerMessage.includes('seller ban') || lowerMessage.includes('apna store') ||
-      lowerMessage.includes('product bechna') || lowerMessage.includes('dukhaan') || lowerMessage.includes('shop kholni') ||
-      lowerMessage.includes('start selling') || lowerMessage.includes('sell products')) {
-      return isUrdu
-        ? "🏪 **Seller Banein Buyonix Pe!**\n\n**Steps:**\n1. Navbar mein **'Become a Seller'** click karo\n2. Store name, address, phone details do\n3. Approval ke liye submit karo\n4. Approve hone pe **Seller Dashboard** milega\n5. Products add karo aur bechna shuru!\n\n**Features:** Dashboard, Analytics, Order Management, Chat with Buyers"
-        : "🏪 **Become a Seller on Buyonix!**\n\n**Steps:**\n1. Click **'Become a Seller'** in navbar\n2. Fill in store name, address, phone\n3. Submit for approval\n4. Once approved, access **Seller Dashboard**\n5. Add products and start selling!\n\n**Features:** Dashboard, Analytics, Order Management, Chat with Buyers";
+    if (lowerMessage.includes('become seller') || lowerMessage.includes('start selling') || lowerMessage.includes('sell products') || lowerMessage.includes('open shop')) {
+      return "🏪 **Become a Seller on Buyonix!**\n\n**Steps:**\n1. Click **'Become a Seller'** in navbar\n2. Fill in store name, address, phone\n3. Submit for approval\n4. Once approved, access **Seller Dashboard**\n5. Add products and start selling!\n\n**Features:** Dashboard, Analytics, Order Management, Chat with Buyers";
     }
 
-    if (lowerMessage.includes('seller dashboard') || lowerMessage.includes('apni shop') || lowerMessage.includes('meri dukhaan') || lowerMessage.includes('my store')) {
-      return isUrdu
-        ? "📊 **Seller Dashboard Features:**\n\n• **Dashboard** - Sales, orders, revenue dekho\n• **Products** - Products add/edit/delete karo\n• **Orders** - Customer orders manage karo\n• **Analytics** - Sales ke charts dekho\n• **Chat** - Customers se baat karo\n• **Payouts** - Apni earnings track karo\n\nSeller login ke baad access karo!"
-        : "📊 **Seller Dashboard Features:**\n\n• **Dashboard** - View sales, orders, revenue\n• **Products** - Add, edit, delete products\n• **Orders** - Manage customer orders\n• **Analytics** - View sales charts\n• **Chat** - Respond to customers\n• **Payouts** - Track your earnings\n\nAccess after logging in as a seller!";
+    if (lowerMessage.includes('seller dashboard') || lowerMessage.includes('my store') || lowerMessage.includes('my shop')) {
+      return "📊 **Seller Dashboard Features:**\n\n• **Dashboard** - View sales, orders, revenue\n• **Products** - Add, edit, delete products\n• **Orders** - Manage customer orders\n• **Analytics** - View sales charts\n• **Chat** - Respond to customers\n• **Payouts** - Track your earnings\n\nAccess after logging in as a seller!";
     }
 
     // ===== PAYMENT METHODS =====
-    if (lowerMessage.includes('payment') || lowerMessage.includes('pay') || lowerMessage.includes('easypaisa') || lowerMessage.includes('jazzcash') ||
-      lowerMessage.includes('paisa') || lowerMessage.includes('paise') || lowerMessage.includes('payment kaise') || lowerMessage.includes('raqam')) {
-      return isUrdu
-        ? "💳 **Payment Methods:**\n\n• **EasyPaisa** 📱 - Number pe bhejo, TRX ID do\n• **JazzCash** 📲 - Number pe bhejo, TRX ID do\n• **Card** 💳 - Visa/Mastercard (Stripe se secure)\n• **COD** 📦 - Cash on Delivery (ghar pe paisa do)\n\nSab payments **100% secure** hain!"
-        : "💳 **Payment Methods:**\n\n• **EasyPaisa** 📱 - Send to our number, enter TRX ID\n• **JazzCash** 📲 - Send to our number, enter TRX ID\n• **Card** 💳 - Visa/Mastercard (secure via Stripe)\n• **COD** 📦 - Cash on Delivery\n\nAll payments are **100% secure**!";
+    if (lowerMessage.includes('payment') || lowerMessage.includes('pay') || lowerMessage.includes('easypaisa') || lowerMessage.includes('jazzcash')) {
+      return "💳 **Payment Methods:**\n\n• **EasyPaisa** 📱 - Send to our number, enter TRX ID\n• **JazzCash** 📲 - Send to our number, enter TRX ID\n• **Card** 💳 - Visa/Mastercard (secure via Stripe)\n• **COD** 📦 - Cash on Delivery\n\nAll payments are **100% secure**!";
     }
 
     // ===== CART & CHECKOUT =====
-    if (lowerMessage.includes('cart') || lowerMessage.includes('checkout') || lowerMessage.includes('khareed') ||
-      lowerMessage.includes('order kaise') || lowerMessage.includes('shopping kaise') || lowerMessage.includes('lena hai') ||
-      lowerMessage.includes('how to buy') || lowerMessage.includes('how to order')) {
-      return isUrdu
-        ? "🛒 **Cart & Checkout - Shopping Kaise Karein:**\n\n**Cart mein daalna:**\n1. Product dekhein, **'Add to Cart'** click karein\n2. Navbar mein cart icon pe count dikhega\n\n**Order Place karna:**\n1. Cart icon click karein\n2. **'Checkout'** dabayein\n3. Name, address, city likho\n4. Payment method chunein\n5. **'Place Order'** click karein!\n\nBas, order ho gaya! 🎉"
-        : "🛒 **Cart & Checkout:**\n\n**Adding to Cart:**\n1. Browse products, click **'Add to Cart'**\n2. Cart icon shows item count in navbar\n\n**Placing Order:**\n1. Click cart icon\n2. Click **'Checkout'**\n3. Enter name, address, city\n4. Select payment method\n5. Click **'Place Order'**!\n\nDone, order placed! 🎉";
+    if (lowerMessage.includes('cart') || lowerMessage.includes('checkout') || lowerMessage.includes('how to buy') || lowerMessage.includes('how to order')) {
+      return "🛒 **Cart & Checkout:**\n\n**Adding to Cart:**\n1. Browse products, click **'Add to Cart'**\n2. Cart icon shows item count in navbar\n\n**Placing Order:**\n1. Click cart icon\n2. Click **'Checkout'**\n3. Enter name, address, city\n4. Select payment method\n5. Click **'Place Order'**!\n\nDone, order placed! 🎉";
     }
 
     // ===== ORDERS & TRACKING =====
-    if (lowerMessage.includes('track') || lowerMessage.includes('order kahan') || lowerMessage.includes('parcel kahan') ||
-      lowerMessage.includes('delivery kab') || lowerMessage.includes('mera order') || lowerMessage.includes('order status') ||
-      lowerMessage.includes('where is my order') || lowerMessage.includes('track my order')) {
-      return isUrdu
-        ? "📦 **Order Track Kaise Karein:**\n\n1. Profile icon click karo (top right)\n2. **'My Orders'** pe jao\n3. Apna order dhundo\n4. **'Track'** button dabao\n5. Real-time status dekho!\n\n**Status:**\n• Pending → Processing → Shipped → Delivered\n\nHar stage pe email aayegi!"
-        : "📦 **Track Your Order:**\n\n1. Click profile icon (top right)\n2. Go to **'My Orders'**\n3. Find your order\n4. Click **'Track'** button\n5. See real-time status!\n\n**Statuses:**\n• Pending → Processing → Shipped → Delivered\n\nYou'll receive email at each stage!";
+    if (lowerMessage.includes('track') || lowerMessage.includes('order status') || lowerMessage.includes('where is my order') || lowerMessage.includes('delivery status')) {
+      return "📦 **Track Your Order:**\n\n1. Click profile icon (top right)\n2. Go to **'My Orders'**\n3. Find your order\n4. Click **'Track'** button\n5. See real-time status!\n\n**Statuses:**\n• Pending → Processing → Shipped → Delivered\n\nYou'll receive email at each stage!";
     }
 
-    if (lowerMessage.includes('order') || lowerMessage.includes('orders dekh') || lowerMessage.includes('purane order') ||
-      lowerMessage.includes('my orders') || lowerMessage.includes('order history')) {
-      return isUrdu
-        ? "📋 **Orders Dekhna:**\n\n1. Profile icon click karo\n2. **'My Orders'** select karo\n3. Sab orders ki list milegi\n4. Kisi bhi order pe click karke details dekho\n\nYahan se track, review, ya return bhi kar sakte ho!"
-        : "📋 **View Your Orders:**\n\n1. Click your profile icon\n2. Select **'My Orders'**\n3. See all past and current orders\n4. Click any order for details\n\nFrom here you can track, review, or request returns!";
+    if (lowerMessage.includes('order') || lowerMessage.includes('my orders') || lowerMessage.includes('order history')) {
+      return "📋 **View Your Orders:**\n\n1. Click your profile icon\n2. Select **'My Orders'**\n3. See all past and current orders\n4. Click any order for details\n\nFrom here you can track, review, or request returns!";
     }
 
     // ===== RETURN & REFUND =====
-    if (lowerMessage.includes('return') || lowerMessage.includes('refund') || lowerMessage.includes('wapas') ||
-      lowerMessage.includes('paise wapas') || lowerMessage.includes('cancel') || lowerMessage.includes('order cancel')) {
-      return isUrdu
-        ? "↩️ **Return & Refund - Wapsi:**\n\n**Return Kaise Karein:**\n1. **My Orders** mein jao\n2. Order pe **'Return'** click karo\n3. Waja select karo, submit karo\n4. Item wapas bhejo\n\n**Refund:**\n• 2-3 din mein process hota hai\n• Original payment method mein paise aayenge\n\n**Note:** Item unused aur original packing mein hona chahiye!"
-        : "↩️ **Returns & Refunds:**\n\n**To Return:**\n1. Go to **My Orders**\n2. Click **'Return'** on the order\n3. Select reason and submit\n4. Ship the item back\n\n**Refund:**\n• Processed within 2-3 business days\n• Credited to original payment method\n\n**Note:** Items must be unused and in original packaging!";
+    if (lowerMessage.includes('return') || lowerMessage.includes('refund') || lowerMessage.includes('cancel') || lowerMessage.includes('money back')) {
+      return "↩️ **Returns & Refunds:**\n\n**To Return:**\n1. Go to **My Orders**\n2. Click **'Return'** on the order\n3. Select reason and submit\n4. Ship the item back\n\n**Refund:**\n• Processed within 2-3 business days\n• Credited to original payment method\n\n**Note:** Items must be unused and in original packaging!";
     }
 
     // ===== SHIPPING =====
-    if (lowerMessage.includes('shipping') || lowerMessage.includes('delivery') || lowerMessage.includes('kitne din') ||
-      lowerMessage.includes('kab ayega') || lowerMessage.includes('delivery charges') || lowerMessage.includes('shipping fee') ||
-      lowerMessage.includes('delivery time') || lowerMessage.includes('how long')) {
-      return isUrdu
-        ? "🚚 **Delivery Information:**\n\n**Delivery Time:**\n• **Standard:** 3-5 din\n• **Express:** 1-2 din\n\n**Shipping Fee:** Rs. 200-500 (location ke hisab se)\n\n**Free Delivery:** Rs. 5000+ ke order pe!\n\nPure Pakistan mein delivery available hai. Real-time track kar sakte ho!"
-        : "🚚 **Shipping Information:**\n\n**Delivery Time:**\n• **Standard:** 3-5 business days\n• **Express:** 1-2 business days\n\n**Shipping Fee:** Rs. 200-500 based on location\n\n**Free Shipping:** On orders above Rs. 5000!\n\nWe deliver across Pakistan. Track in real-time!";
+    if (lowerMessage.includes('shipping') || lowerMessage.includes('delivery') || lowerMessage.includes('delivery time') || lowerMessage.includes('how long') || lowerMessage.includes('shipping fee')) {
+      return "🚚 **Shipping Information:**\n\n**Delivery Time:**\n• **Standard:** 3-5 business days\n• **Express:** 1-2 business days\n\n**Shipping Fee:** Rs. 200-500 based on location\n\n**Free Shipping:** On orders above Rs. 5000!\n\nWe deliver across Pakistan. Track in real-time!";
     }
 
     // ===== SEARCH & BROWSE =====
-    if (lowerMessage.includes('search') || lowerMessage.includes('dhundo') || lowerMessage.includes('kaise dhunde') ||
-      lowerMessage.includes('product kahan') || lowerMessage.includes('browse') || lowerMessage.includes('find product')) {
-      return isUrdu
-        ? "🔎 **Product Search Kaise Karein:**\n\n**Text Search:**\n• Search bar mein product ya category naam likho\n• Enter dabao\n\n**Category Search (NEW!):**\n• 'Show all footwear' likho\n• 'List sports' likho\n• 'Books dikha' likho\n• 'Jewelry' likho\n• 'Accessories dikhao'\n\n**Visual Search:**\n• Camera icon 📷 click karo\n• Photo upload karo, similar products milenge!\n\n**Browse:**\n• **Shop** page pe sab products hain\n• Category, price, rating se filter karo\n\n**Categories Available:**\n👟 Footwear | 🏃 Sports | 📚 Books | 🎮 Toys | 👕 Clothing | 📱 Electronics | 💄 Beauty | 💍 Jewelry | 🏠 Home & Garden | 🎁 Accessories"
-        : "🔎 **How to Find Products:**\n\n**Text Search:**\n• Type in the search bar\n• Search by product name or category\n\n**Category Search (NEW!):**\n• 'Show all shoes' or 'footwear'\n• 'List sports items' or 'sports'\n• 'Books available?'\n• 'Jewelry'\n• 'Accessories' or 'phone accessories'\n\n**Visual Search:**\n• Click 📷 camera icon\n• Upload image to find similar products!\n\n**Browse:**\n• Visit **Shop** page for all products\n• Filter by category, price, rating\n\n**Available Categories:**\n👟 Footwear | 🏃 Sports | 📚 Books | 🎮 Toys | 👕 Clothing | 📱 Electronics | 💄 Beauty | 💍 Jewelry | 🏠 Home & Garden | 🎁 Accessories";
+    if (lowerMessage.includes('search') || lowerMessage.includes('browse') || lowerMessage.includes('find product') || lowerMessage.includes('how to find')) {
+      return "🔎 **How to Find Products:**\n\n**Text Search:**\n• Type in the search bar\n• Search by product name or category\n\n**Category Search:**\n• 'Show all shoes' or 'footwear'\n• 'List sports items' or 'sports'\n• 'Books available?'\n• 'Jewelry items'\n\n**Visual Search:**\n• Click 📷 camera icon\n• Upload image to find similar products!\n\n**Browse:**\n• Visit **Shop** page for all products\n• Filter by category, price, rating\n\n**Available Categories:**\n👟 Footwear | 🏃 Sports | 📚 Books | 🎮 Toys | 👕 Clothing | 📱 Electronics | 💄 Beauty | 💍 Jewelry | 🏠 Home & Garden | 🎁 Accessories";
     }
 
     // ===== CATEGORIES =====
-    if (lowerMessage.includes('category') || lowerMessage.includes('categories') || lowerMessage.includes('kya milta')) {
-      return isUrdu
-        ? "📁 **Product Categories - Available:**\n\n• 👟 **Footwear** - sab tarah ke joote\n• 🏃 **Sports** - gym, sports, fitness items\n• 📚 **Books** - novels, textbooks, educational\n• 🎮 **Toys** - toys, games, video games\n• 👕 **Clothing** - kapre, shirts, pants\n• 📱 **Electronics** - phones, laptops, gadgets\n• 💄 **Beauty** - cosmetics, skincare, makeup\n• 💍 **Jewelry** - rings, necklaces, earrings\n• 🏠 **Home & Garden** - furniture, decor\n• 🎁 **Accessories** - phone cases, chargers, headphones\n\n**Try asking:**\n• 'Show all shoes' / 'Sab joote'\n• 'List sports' / 'Sports items'\n• 'Books dikhao' / 'Show books'\n• 'Phone accessories' / 'Earphones'\n• 'Jewelry dikha'\n\nShop page ya navbar se bhi browse kar sakte ho!"
-        : "📁 **Product Categories - Available:**\n\n• 👟 **Footwear** - all types of shoes\n• 🏃 **Sports** - gym, sports, fitness items\n• 📚 **Books** - novels, textbooks, educational\n• 🎮 **Toys** - toys, games, video games\n• 👕 **Clothing** - clothing, shirts, pants\n• 📱 **Electronics** - phones, laptops, gadgets\n• 💄 **Beauty** - cosmetics, skincare, makeup\n• 💍 **Jewelry** - rings, necklaces, earrings\n• 🏠 **Home & Garden** - furniture, decor\n• 🎁 **Accessories** - phone cases, chargers, headphones\n\n**Try asking:**\n• 'Show all shoes'\n• 'List sports items'\n• 'Books available?'\n• 'Phone accessories'\n• 'Jewelry items'\n\nYou can also browse from the **Shop** page or navbar!";
+    if (lowerMessage.includes('category') || lowerMessage.includes('categories') || lowerMessage.includes('what do you sell')) {
+      return "📁 **Product Categories:**\n\n• 👟 **Footwear** - shoes, boots, sneakers\n• 🏃 **Sports** - gym, sports, fitness items\n• 📚 **Books** - novels, textbooks, educational\n• 🎮 **Toys** - toys, games, video games\n• 👕 **Clothing** - shirts, pants, dresses\n• 📱 **Electronics** - phones, laptops, gadgets\n• 💄 **Beauty** - cosmetics, skincare, makeup\n• 💍 **Jewelry** - rings, necklaces, earrings\n• 🏠 **Home & Garden** - furniture, decor\n• 🎁 **Accessories** - phone cases, chargers, headphones\n\nYou can also browse from the **Shop** page or navbar!";
     }
 
     // ===== ACCOUNT & PROFILE =====
-    if (lowerMessage.includes('account') || lowerMessage.includes('profile') || lowerMessage.includes('apna account') ||
-      lowerMessage.includes('settings') || lowerMessage.includes('meri profile')) {
-      return isUrdu
-        ? "👤 **Account Manage Karna:**\n\n1. Profile icon click karo (top right)\n2. Options milenge:\n   • **My Profile** - Details update karo\n   • **My Orders** - Order history\n   • **Addresses** - Delivery addresses\n   • **Settings** - Preferences\n\n**Tip:** Email updated rakho notifications ke liye!"
-        : "👤 **Account Management:**\n\n1. Click profile icon (top right)\n2. Access:\n   • **My Profile** - Update personal info\n   • **My Orders** - View order history\n   • **Addresses** - Manage addresses\n   • **Settings** - Preferences\n\n**Tip:** Keep email updated for notifications!";
+    if (lowerMessage.includes('account') || lowerMessage.includes('profile') || lowerMessage.includes('settings')) {
+      return "👤 **Account Management:**\n\n1. Click profile icon (top right)\n2. Access:\n   • **My Profile** - Update personal info\n   • **My Orders** - View order history\n   • **Addresses** - Manage addresses\n   • **Settings** - Preferences\n\n**Tip:** Keep email updated for notifications!";
     }
 
     // ===== LOGIN & REGISTER =====
-    if (lowerMessage.includes('login') || lowerMessage.includes('sign in') || lowerMessage.includes('kaise login') || lowerMessage.includes('login karna')) {
-      return isUrdu
-        ? "🔐 **Login Kaise Karein:**\n\n**Options:**\n1. **Email + Password** - Apni details dalo\n2. **Google Login** - 'Continue with Google' click karo\n\n**Password Bhool Gaye?**\n• 'Forgot Password' click karo\n• Email dalo, OTP aayega\n• Naya password set karo!\n\nAccount nahi hai? **'Sign Up'** pe click karo!"
-        : "🔐 **Login to Buyonix:**\n\n**Options:**\n1. **Email & Password** - Enter your credentials\n2. **Google Login** - Click 'Continue with Google'\n\n**Forgot Password?**\n• Click 'Forgot Password'\n• Enter email, receive OTP\n• Set new password!\n\nNo account? Click **'Sign Up'**!";
+    if (lowerMessage.includes('login') || lowerMessage.includes('sign in')) {
+      return "🔐 **Login to Buyonix:**\n\n**Options:**\n1. **Email & Password** - Enter your credentials\n2. **Google Login** - Click 'Continue with Google'\n\n**Forgot Password?**\n• Click 'Forgot Password'\n• Enter email, receive OTP\n• Set new password!\n\nNo account? Click **'Sign Up'**!";
     }
 
-    if (lowerMessage.includes('register') || lowerMessage.includes('sign up') || lowerMessage.includes('account banana') ||
-      lowerMessage.includes('naya account') || lowerMessage.includes('account kaise') || lowerMessage.includes('create account')) {
-      return isUrdu
-        ? "📝 **Account Banana:**\n\n1. **'Sign Up'** button click karo\n2. Name, email, password dalo\n3. Ya **'Continue with Google'** use karo\n4. Email verify karo\n5. Shopping shuru karo!\n\n**Fayde:** Order tracking, wishlist, fast checkout, exclusive deals!"
-        : "📝 **Create an Account:**\n\n1. Click **'Sign Up'** button\n2. Enter name, email, password\n3. Or use **'Continue with Google'**\n4. Verify your email\n5. Start shopping!\n\n**Benefits:** Order tracking, wishlist, faster checkout, exclusive deals!";
+    if (lowerMessage.includes('register') || lowerMessage.includes('sign up') || lowerMessage.includes('create account')) {
+      return "📝 **Create an Account:**\n\n1. Click **'Sign Up'** button\n2. Enter name, email, password\n3. Or use **'Continue with Google'**\n4. Verify your email\n5. Start shopping!\n\n**Benefits:** Order tracking, wishlist, faster checkout, exclusive deals!";
     }
 
     // ===== REVIEWS & RATINGS =====
-    if (lowerMessage.includes('review') || lowerMessage.includes('rating') || lowerMessage.includes('feedback') ||
-      lowerMessage.includes('rai') || lowerMessage.includes('stars')) {
-      return isUrdu
-        ? "⭐ **Reviews & Ratings:**\n\n**Review Likhna:**\n1. Jo product liya, uski page pe jao\n2. **Reviews** section tak scroll karo\n3. **'Write a Review'** click karo\n4. Stars do (1-5) aur feedback likho\n5. Submit!\n\nDoosron ko faisla karne mein madad milti hai!"
-        : "⭐ **Reviews & Ratings:**\n\n**To Write a Review:**\n1. Go to the product you purchased\n2. Scroll to **Reviews** section\n3. Click **'Write a Review'**\n4. Rate 1-5 stars and add feedback\n5. Submit!\n\nHelps others make decisions!";
+    if (lowerMessage.includes('review') || lowerMessage.includes('rating') || lowerMessage.includes('feedback') || lowerMessage.includes('stars')) {
+      return "⭐ **Reviews & Ratings:**\n\n**To Write a Review:**\n1. Go to the product you purchased\n2. Scroll to **Reviews** section\n3. Click **'Write a Review'**\n4. Rate 1-5 stars and add feedback\n5. Submit!\n\nHelps others make decisions!";
     }
 
     // ===== RECOMMENDATIONS =====
-    if (lowerMessage.includes('recommend') || lowerMessage.includes('suggestion') || lowerMessage.includes('for you') ||
-      lowerMessage.includes('mere liye') || lowerMessage.includes('kya lu')) {
-      return isUrdu
-        ? "🎯 **AI Recommendations:**\n\nBuyonix AI aapke liye products suggest karta hai!\n\n**Kaise kaam karta hai:**\n• Aap kya browse karte ho\n• Kya purchase kiya\n• Similar customers kya lete hain\n\nHome page pe **'Recommended For You'** section dekho!"
-        : "🎯 **AI Recommendations:**\n\nBuyonix uses AI to suggest products you'll love!\n\n**How it works:**\n• Based on your browsing history\n• Products you've purchased\n• Similar customers' preferences\n\nCheck **'Recommended For You'** on Home page!";
+    if (lowerMessage.includes('recommend') || lowerMessage.includes('suggestion') || lowerMessage.includes('for you') || lowerMessage.includes('what should i buy')) {
+      return "🎯 **AI Recommendations:**\n\nBuyonix uses AI to suggest products you'll love!\n\n**How it works:**\n• Based on your browsing history\n• Products you've purchased\n• Similar customers' preferences\n\nCheck **'Recommended For You'** on Home page!";
     }
 
     // ===== CHAT WITH SELLER =====
-    if (lowerMessage.includes('chat') || lowerMessage.includes('seller se baat') || lowerMessage.includes('seller ko contact') ||
-      lowerMessage.includes('message') || lowerMessage.includes('sawaal') || lowerMessage.includes('contact seller')) {
-      return isUrdu
-        ? "💬 **Seller Se Baat Karna:**\n\n1. Kisi bhi product page pe jao\n2. **'Chat with Seller'** button click karo\n3. Sawaal pucho product ke baare mein\n4. Price, shipping wagera negotiate karo\n\nReal-time chat hai - sellers jaldi jawab dete hain!"
-        : "💬 **Chat with Sellers:**\n\n1. Go to any product page\n2. Click **'Chat with Seller'** button\n3. Ask questions about the product\n4. Negotiate price, shipping, etc.\n\nReal-time messaging - sellers respond quickly!";
+    if (lowerMessage.includes('chat') || lowerMessage.includes('message') || lowerMessage.includes('contact seller')) {
+      return "💬 **Chat with Sellers:**\n\n1. Go to any product page\n2. Click **'Chat with Seller'** button\n3. Ask questions about the product\n4. Negotiate price, shipping, etc.\n\nReal-time messaging - sellers respond quickly!";
     }
 
     // ===== DEALS & DISCOUNTS =====
-    if (lowerMessage.includes('discount') || lowerMessage.includes('deal') || lowerMessage.includes('offer') ||
-      lowerMessage.includes('sale') || lowerMessage.includes('sasta') || lowerMessage.includes('kam price') || lowerMessage.includes('coupon')) {
-      return isUrdu
-        ? "🏷️ **Deals & Discounts:**\n\n**Deals Kahan Milein:**\n• **Home page** pe featured deals\n• Products pe **red discount badge** dekho\n• Navbar mein **Deals** section\n\n**Coupon Codes:**\n• Checkout pe code dalo\n• Newsletter subscribe karo exclusive codes ke liye!\n\n**Flash Sales:** Limited time - jaldi karo!"
-        : "🏷️ **Deals & Discounts:**\n\n**Find Deals:**\n• Check **Home page** for featured deals\n• Look for **red discount badges** on products\n• Visit **Deals** section in navbar\n\n**Coupon Codes:**\n• Enter code at checkout\n• Subscribe to newsletter for exclusive codes!\n\n**Flash Sales:** Limited-time offers - act fast!";
+    if (lowerMessage.includes('discount') || lowerMessage.includes('deal') || lowerMessage.includes('offer') || lowerMessage.includes('sale') || lowerMessage.includes('coupon')) {
+      return "🏷️ **Deals & Discounts:**\n\n**Find Deals:**\n• Check **Home page** for featured deals\n• Look for **red discount badges** on products\n• Visit **Deals** section in navbar\n\n**Coupon Codes:**\n• Enter code at checkout\n• Subscribe to newsletter for exclusive codes!\n\n**Flash Sales:** Limited-time offers - act fast!";
     }
 
     // ===== WISHLIST / FAVORITES =====
-    if (lowerMessage.includes('wishlist') || lowerMessage.includes('favorite') || lowerMessage.includes('save') ||
-      lowerMessage.includes('baad mein') || lowerMessage.includes('dil laga') || lowerMessage.includes('save for later')) {
-      return isUrdu
-        ? "❤️ **Wishlist / Pasand:**\n\n**Product Save Karna:**\n1. Product pe **heart icon** ❤️ click karo\n2. Wishlist mein add ho gaya!\n\n**Wishlist Dekhna:**\n• Profile → **My Wishlist**\n• Saved items dekho\n• Jab chaaho cart mein daalo!"
-        : "❤️ **Wishlist / Favorites:**\n\n**To Save Products:**\n1. Click the **heart icon** ❤️ on any product\n2. Product saved to your wishlist!\n\n**View Wishlist:**\n• Profile → **My Wishlist**\n• See all saved items\n• Move to cart when ready!";
+    if (lowerMessage.includes('wishlist') || lowerMessage.includes('favorite') || lowerMessage.includes('save for later')) {
+      return "❤️ **Wishlist / Favorites:**\n\n**To Save Products:**\n1. Click the **heart icon** ❤️ on any product\n2. Product saved to your wishlist!\n\n**View Wishlist:**\n• Profile → **My Wishlist**\n• See all saved items\n• Move to cart when ready!";
     }
 
     // ===== CONTACT & SUPPORT =====
-    if (lowerMessage.includes('contact') || lowerMessage.includes('support') || lowerMessage.includes('help') ||
-      lowerMessage.includes('madad') || lowerMessage.includes('problem') || lowerMessage.includes('shikayat') || lowerMessage.includes('customer service')) {
-      return isUrdu
-        ? "📞 **Contact Buyonix:**\n\n• **Email:** support@buyonix.com\n• **Phone:** +92 300 0579453\n• **Address:** Air University E9, Islamabad\n\n**Timing:** Mon-Sat, 9 AM - 6 PM\n\nYa phir mujhse yahan baat karo! Main 24/7 available hoon 🤖"
-        : "📞 **Contact Buyonix:**\n\n• **Email:** support@buyonix.com\n• **Phone:** +92 300 0579453\n• **Address:** Air University E9, Islamabad\n\n**Hours:** Mon-Sat, 9 AM - 6 PM\n\nOr chat with me here - I'm available 24/7! 🤖";
+    if (lowerMessage.includes('contact') || lowerMessage.includes('support') || lowerMessage.includes('help') || lowerMessage.includes('problem') || lowerMessage.includes('customer service')) {
+      return "📞 **Contact Buyonix:**\n\n• **Email:** support@buyonix.com\n• **Phone:** +92 300 0579453\n• **Address:** Air University E9, Islamabad\n\n**Hours:** Mon-Sat, 9 AM - 6 PM\n\nOr chat with me here - I'm available 24/7! 🤖";
     }
 
     // ===== ABOUT BUYONIX =====
-    if (lowerMessage.includes('about') || lowerMessage.includes('buyonix kya') || lowerMessage.includes('ye kya hai') || lowerMessage.includes('what is buyonix')) {
-      return isUrdu
-        ? "🛍️ **Buyonix Kya Hai:**\n\nBuyonix ek AI-powered e-commerce platform hai!\n\n**Special Features:**\n• 🔍 **Visual Search** - Photo se product dhundo\n• 💰 **Bargaining** - Seller se rate negotiate karo\n• 🎯 **AI Recommendations** - Personalized suggestions\n• 💬 **Real-time Chat** - Sellers se baat karo\n• 🛡️ **Secure Payments** - Safe payment options\n\nSmart shopping Buyonix ke saath!"
-        : "🛍️ **About Buyonix:**\n\nBuyonix is an AI-powered e-commerce platform!\n\n**Special Features:**\n• 🔍 **Visual Search** - Find products using images\n• 💰 **Smart Bargaining** - Negotiate prices with sellers\n• 🎯 **AI Recommendations** - Personalized suggestions\n• 💬 **Real-time Chat** - Talk to sellers directly\n• 🛡️ **Secure Payments** - Multiple safe options\n\nShop smarter with Buyonix!";
+    if (lowerMessage.includes('about') || lowerMessage.includes('what is buyonix')) {
+      return "🛍️ **About Buyonix:**\n\nBuyonix is an AI-powered e-commerce platform!\n\n**Special Features:**\n• 🔍 **Visual Search** - Find products using images\n• 💰 **Smart Bargaining** - Negotiate prices with AI\n• 🎯 **AI Recommendations** - Personalized suggestions\n• 💬 **Real-time Chat** - Talk to sellers directly\n• 🛡️ **Secure Payments** - Multiple safe options\n\nShop smarter with Buyonix!";
     }
 
     // ===== SAFETY & SECURITY =====
-    if (lowerMessage.includes('safe') || lowerMessage.includes('secure') || lowerMessage.includes('privacy') ||
-      lowerMessage.includes('mehfooz') || lowerMessage.includes('trust')) {
-      return isUrdu
-        ? "🔒 **Safety & Security:**\n\n• **Secure Payments** - SSL encrypted\n• **Verified Sellers** - Sab sellers verified hain\n• **Buyer Protection** - Money-back guarantee\n• **Privacy** - Data share nahi hota\n• **Secure Login** - 2FA available\n\nBuyonix pe bharosa karke shopping karo!"
-        : "🔒 **Safety & Security:**\n\n• **Secure Payments** - SSL encrypted transactions\n• **Verified Sellers** - All sellers are verified\n• **Buyer Protection** - Money-back guarantee\n• **Privacy** - Your data is never shared\n• **Secure Login** - 2FA available\n\nShop with confidence on Buyonix!";
+    if (lowerMessage.includes('safe') || lowerMessage.includes('secure') || lowerMessage.includes('privacy') || lowerMessage.includes('trust')) {
+      return "🔒 **Safety & Security:**\n\n• **Secure Payments** - SSL encrypted transactions\n• **Verified Sellers** - All sellers are verified\n• **Buyer Protection** - Money-back guarantee\n• **Privacy** - Your data is never shared\n• **Secure Login** - 2FA available\n\nShop with confidence on Buyonix!";
     }
 
     // ===== GREETINGS =====
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey') ||
-      lowerMessage.includes('salam') || lowerMessage.includes('assalam') || lowerMessage.includes('aoa') ||
-      lowerMessage.includes('kaise ho') || lowerMessage.includes('kya hal')) {
-      return isUrdu
-        ? "👋 **Wa Alaikum Assalam! Buyonix mein Khush Amdeed!**\n\nMain aapka AI assistant hoon. Mujh se pucho:\n\n• 🔍 Visual Search kaise use karein\n• 💰 Bargaining kaise karein\n• 🛒 Shopping kaise karein\n• 📦 Order kaise track karein\n• 💳 Payment methods\n• 🏪 Seller kaise banein\n\nBatao, kya madad chahiye?"
-        : "👋 **Hello! Welcome to Buyonix!**\n\nI'm your AI assistant. Ask me about:\n\n• 🔍 How to use Visual Search\n• 💰 How to bargain prices\n• 🛒 How to shop\n• 📦 How to track orders\n• 💳 Payment methods\n• 🏪 How to become a seller\n\nHow can I help you?";
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey') || lowerMessage.includes('good morning') || lowerMessage.includes('good evening')) {
+      return "👋 **Hello! Welcome to Buyonix!**\n\nI'm your AI assistant. Ask me about:\n\n• 🔍 How to use Visual Search\n• 💰 How to bargain prices\n• 🛒 How to shop\n• 📦 How to track orders\n• 💳 Payment methods\n• 🏪 How to become a seller\n\nHow can I help you?";
     }
 
     // ===== THANKS =====
-    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks') || lowerMessage.includes('shukriya') ||
-      lowerMessage.includes('jazak') || lowerMessage.includes('bohot acha')) {
-      return isUrdu
-        ? "😊 **Shukriya!** Khushi hui madad karke!\n\nKuch aur poochna hai Buyonix ke baare mein? Main 24/7 yahan hoon! 🤖"
-        : "😊 **You're welcome!** Happy to help!\n\nAnything else you'd like to know about Buyonix? I'm here 24/7! 🤖";
+    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks') || lowerMessage.includes('great') || lowerMessage.includes('awesome')) {
+      return "😊 **You're welcome!** Happy to help!\n\nAnything else you'd like to know about Buyonix? I'm here 24/7! 🤖";
     }
 
     // ===== PRODUCT SPECIFIC =====
-    if (lowerMessage.includes('product') || lowerMessage.includes('item') || lowerMessage.includes('cheez') || lowerMessage.includes('saman')) {
-      return isUrdu
-        ? "📦 **Products Dekhna:**\n\n1. **Shop** page pe sab products hain\n2. Search bar se dhundo\n3. Categories se browse karo\n4. Product click karo details ke liye\n5. **'Add to Cart'** ya **'Buy Now'** dabao\n\nVisual Search bhi try karo - photo upload karo similar products milenge!"
-        : "📦 **Viewing Products:**\n\n1. All products are on **Shop** page\n2. Use search bar to find\n3. Browse by categories\n4. Click product for details\n5. Click **'Add to Cart'** or **'Buy Now'**\n\nTry Visual Search too - upload a photo to find similar products!";
+    if (lowerMessage.includes('product') || lowerMessage.includes('item')) {
+      return "📦 **Viewing Products:**\n\n1. All products are on **Shop** page\n2. Use search bar to find\n3. Browse by categories\n4. Click product for details\n5. Click **'Add to Cart'** or **'Buy Now'**\n\nTry Visual Search too - upload a photo to find similar products!";
     }
-    
-    
-    
 
     // ===== DEFAULT FALLBACK =====
-    return isUrdu
-      ? "🤖 **Main Buyonix Assistant Hoon!**\n\nMujh se pucho:\n• **Visual Search** - Photo se product dhundo\n• **Bargaining** - Rate negotiate karo\n• **Payment** - EasyPaisa, JazzCash, COD\n• **Orders** - Track karo\n• **Seller** - Apni shop kholein\n• **Cart** - Shopping help\n• **Returns** - Wapsi policy\n\nKya madad chahiye?"
-      : "🤖 **I'm your Buyonix Assistant!**\n\nAsk me about:\n• **Visual Search** - Find products with images\n• **Bargaining** - Negotiate prices\n• **Payment** - EasyPaisa, JazzCash, COD\n• **Orders** - Track & manage\n• **Seller** - How to sell on Buyonix\n• **Cart** - Shopping help\n• **Returns** - Refund policy\n\nHow can I help you?";
+    return "🤖 **I'm your Buyonix Assistant!**\n\nAsk me about:\n• **Visual Search** - Find products with images\n• **Bargaining** - Negotiate prices\n• **Payment** - EasyPaisa, JazzCash, COD\n• **Orders** - Track & manage\n• **Seller** - How to sell on Buyonix\n• **Cart** - Shopping help\n• **Returns** - Refund policy\n\nOr ask about any specific product by name!\n\nHow can I help you?";
   };
 
   const handleSendMessage = async () => {
@@ -434,32 +331,50 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     // Check if it's a product query
     if (isProductQuery(userText)) {
       setIsLoading(true);
-      const isUrdu = language === 'ur';
 
       // Add loading message
       const loadingId = (Date.now() + 1).toString();
       setMessages((prev) => [...prev, {
         id: loadingId,
-        text: isUrdu ? '🔍 Products dhundh raha hoon...' : '🔍 Searching for products...',
+        text: '🔍 Searching for products...',
         sender: 'bot',
         timestamp: new Date(),
       }]);
 
       try {
-        // Try to extract category first
         const detectedCategory = extractCategory(userText);
         const productName = extractProductName(userText);
+        const lowerText = userText.toLowerCase();
 
-        if (detectedCategory || productName.length > 1) {
-          // Use category search if category detected, otherwise use product name
-          const products = detectedCategory 
-            ? await searchProducts(detectedCategory, detectedCategory)
-            : await searchProducts(productName);
+        // Check if user explicitly wants a category listing ("show all electronics", "list sports")
+        const wantsCategoryListing = detectedCategory && (
+          lowerText.includes('show all') || lowerText.includes('list') || 
+          lowerText.includes('all ') || lowerText.includes('category')
+        );
 
+        let products: Product[] = [];
+
+        if (wantsCategoryListing && detectedCategory) {
+          // User explicitly wants all items from a category
+          products = await searchProducts(detectedCategory, detectedCategory);
+        } else if (productName.length > 1) {
+          // Try searching by product name first
+          products = await searchProducts(productName);
+
+          // If no results by name AND a category was detected, fall back to category
+          if (products.length === 0 && detectedCategory) {
+            products = await searchProducts(detectedCategory, detectedCategory);
+          }
+        } else if (detectedCategory) {
+          // Only category keyword, no product name
+          products = await searchProducts(detectedCategory, detectedCategory);
+        }
+
+        if (productName.length > 1 || detectedCategory) {
           // Remove loading message and add result
           setMessages((prev) => prev.filter(m => m.id !== loadingId).concat({
             id: (Date.now() + 2).toString(),
-            text: formatProductInfo(products, isUrdu),
+            text: formatProductInfo(products),
             sender: 'bot',
             timestamp: new Date(),
           }));
@@ -467,9 +382,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
           // Query too vague
           setMessages((prev) => prev.filter(m => m.id !== loadingId).concat({
             id: (Date.now() + 2).toString(),
-            text: isUrdu
-              ? '🤔 Konsa product ya category? Jaise "shoewear dikha", "sports items" ya "phone accessories dikhao"'
-              : '🤔 Which product or category? Try "show shoes", "sports items" or "phone accessories"',
+            text: '🤔 Which product or category? Try "show shoes", "sports items" or "phone accessories"',
             sender: 'bot',
             timestamp: new Date(),
           }));
@@ -477,9 +390,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       } catch {
         setMessages((prev) => prev.filter(m => m.id !== loadingId).concat({
           id: (Date.now() + 2).toString(),
-          text: isUrdu
-            ? '❌ Products search mein error. Please dobara try karo.'
-            : '❌ Error searching products. Please try again.',
+          text: '❌ Error searching products. Please try again.',
           sender: 'bot',
           timestamp: new Date(),
         }));
@@ -533,35 +444,12 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-600 to-teal-400 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden">
+            <img src={buyonixLogo} alt="Buyonix" className="w-7 h-7 object-contain" />
           </div>
-          <span className="font-semibold">Chatling Bot</span>
+          <span className="font-semibold">Buyonix Assistant</span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="text-white hover:text-gray-200">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-            </svg>
-          </button>
           <button
             onClick={onClose}
             className="text-white hover:text-gray-200 transition-colors"
@@ -578,29 +466,6 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
         </div>
       </div>
 
-      {/* Language Toggle */}
-      <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-100">
-        <span className="text-xs text-gray-500 mr-1">🌐</span>
-        <button
-          onClick={() => setLanguage('en')}
-          className={`px-3 py-1 text-xs rounded-full font-medium transition-all ${language === 'en'
-            ? 'bg-blue-600 text-white shadow-sm'
-            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-            }`}
-        >
-          English
-        </button>
-        <button
-          onClick={() => setLanguage('ur')}
-          className={`px-3 py-1 text-xs rounded-full font-medium transition-all ${language === 'ur'
-            ? 'bg-blue-600 text-white shadow-sm'
-            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-            }`}
-        >
-          Roman Urdu
-        </button>
-      </div>
-
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         <div className="space-y-4">
@@ -610,26 +475,8 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.sender === 'bot' && (
-                <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-2 flex-shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-2 flex-shrink-0 overflow-hidden">
+                  <img src={buyonixLogo} alt="Bot" className="w-6 h-6 object-contain" />
                 </div>
               )}
               <div
@@ -640,34 +487,8 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
               >
                 <p className="text-sm whitespace-pre-wrap">{formatMessage(message.text)}</p>
 
-                {/* Feedback buttons for bot messages */}
-                {message.sender === 'bot' && !helpfulResponse[message.id] && (
-                  <div className="mt-3 pt-3 border-t border-gray-300">
-                    <p className="text-xs text-gray-600 mb-2">Was this response helpful?</p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleFeedback(message.id, 'yes')}
-                        className="px-3 py-1 text-xs bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-colors"
-                      >
-                        Yes
-                      </button>
-                      <button
-                        onClick={() => handleFeedback(message.id, 'no')}
-                        className="px-3 py-1 text-xs bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-colors"
-                      >
-                        No
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {helpfulResponse[message.id] && (
-                  <div className="mt-2 pt-2 border-t border-gray-300">
-                    <p className="text-xs text-green-600">
-                      {helpfulResponse[message.id] === 'yes' ? '✓ Thank you for your feedback!' : '✗ Thanks, we\'ll improve!'}
-                    </p>
-                  </div>
-                )}
+
               </div>
             </div>
           ))}
@@ -683,7 +504,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={language === 'ur' ? 'Yahan apna sawal likho...' : 'Type your message here...'}
+            placeholder="Type your message here..."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           />
           <button
@@ -706,7 +527,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             </svg>
           </button>
         </div>
-        <p className="text-xs text-gray-500 text-center mt-2">Powered by Chatling</p>
+        <p className="text-xs text-gray-500 text-center mt-2">Powered by Buyonix AI</p>
       </div>
     </div>
   );

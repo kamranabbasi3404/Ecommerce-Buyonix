@@ -855,81 +855,172 @@ router.post("/visual-search", async (req, res) => {
             });
         }
 
-        // Try to use pre-computed embeddings for fast search (all products in seconds!)
+        // Try to use pre-computed embeddings for fast search
         const productsWithEmbeddings = await Product.find({
             status: 'active',
             images: { $exists: true, $ne: [] },
             imageEmbedding: { $exists: true, $ne: null, $not: { $size: 0 } }
         }).select('+imageEmbedding').populate('sellerId', 'storeName businessName');
 
-        let similarityResults;
+        let similarityResults = [];
 
-        if (productsWithEmbeddings.length > 10) {
-            // FAST PATH: Use pre-computed embeddings
-            console.log(`⚡ Fast visual search: using ${productsWithEmbeddings.length} pre-computed embeddings`);
+        // Extract query image features ONCE
+        const queryFeatures = await visualSearchHelper.extractFeatures(queryImage);
 
-            // Extract query image features first
-            const queryFeatures = await visualSearchHelper.extractFeatures(queryImage);
+        // FAST PATH: Compare with products that already have embeddings
+        if (productsWithEmbeddings.length > 0) {
+            console.log(`⚡ Fast visual search: comparing with ${productsWithEmbeddings.length} pre-computed embeddings`);
 
-            // Compare with all embeddings instantly (pure math, no image loading!)
-            const results = [];
             for (const product of productsWithEmbeddings) {
                 const similarity = visualSearchHelper.cosineSimilarity(queryFeatures, product.imageEmbedding);
-                results.push({
+                similarityResults.push({
                     productId: product._id.toString(),
                     similarity: similarity
                 });
             }
-
-            // Sort and get top results
-            results.sort((a, b) => b.similarity - a.similarity);
-            similarityResults = results.slice(0, topN);
-
-        } else {
-            // SLOW PATH: Compute on-demand (fallback)
-            console.log(`🔍 Visual search: computing on-demand for ${products.length} products`);
-
-            const MAX_PRODUCTS_TO_COMPARE = 20;
-            const productsToSearch = products.slice(0, MAX_PRODUCTS_TO_COMPARE);
-
-            const productImages = productsToSearch.map(p => ({
-                productId: p._id.toString(),
-                imageUrl: p.images[0]
-            }));
-
-            similarityResults = await visualSearchHelper.findSimilarProducts(
-                queryImage,
-                productImages,
-                topN
-            );
         }
 
-        // Build response with full product details
-        // Filter by minimum similarity threshold to avoid unrelated products
-        const MIN_SIMILARITY_THRESHOLD = 0.75; // 75% minimum match required
+        // Find products WITHOUT embeddings (they would be invisible otherwise!)
+        const embeddingIds = new Set(productsWithEmbeddings.map(p => p._id.toString()));
+        const productsWithoutEmbeddings = products.filter(p => !embeddingIds.has(p._id.toString()));
+
+        // ON-DEMAND: Compute embeddings for products missing them
+        if (productsWithoutEmbeddings.length > 0) {
+            console.log(`🔍 Computing on-demand for ${productsWithoutEmbeddings.length} products without embeddings`);
+
+            for (const product of productsWithoutEmbeddings) {
+                try {
+                    const imageSource = product.images[0];
+                    const productFeatures = await visualSearchHelper.extractFeatures(imageSource);
+                    const similarity = visualSearchHelper.cosineSimilarity(queryFeatures, productFeatures);
+
+                    similarityResults.push({
+                        productId: product._id.toString(),
+                        similarity: similarity
+                    });
+
+                    // Auto-save embedding for next time (fire-and-forget)
+                    Product.findByIdAndUpdate(product._id, { imageEmbedding: productFeatures }).catch(() => {});
+                } catch (err) {
+                    console.warn(`⚠️ Skip ${product.name}: ${err.message}`);
+                }
+            }
+        }
+
+        // Sort all results by similarity
+        similarityResults.sort((a, b) => b.similarity - a.similarity);
+        similarityResults = similarityResults.slice(0, topN * 2); // Keep extra for filtering
+
+        // ===== INTELLIGENT VISUAL SEARCH FILTERING =====
+        // Step 0: Absolute confidence check — if best score is too low, no product type match exists
+        // Step 1: Dynamic cutoff — only keep results within range of best match
+        // Step 2: Category clustering — identify dominant category and filter noise
+
+        const allProducts = [...products, ...productsWithEmbeddings];
+        const uniqueProductMap = new Map();
+        for (const p of allProducts) {
+            uniqueProductMap.set(p._id.toString(), p);
+        }
+
+        const bestScore = similarityResults.length > 0 ? similarityResults[0].similarity : 0;
+
+        // Step 1: Dynamic Cutoff + Score Gap Detection
+        // Keep only products that are visually CLOSE to the best match
+        // 82% of best score = tight filter (volleyball won't show skateboard)
+        const dynamicCutoff = bestScore * 0.82;
+        let filteredByScore = similarityResults.filter(m => m.similarity >= dynamicCutoff);
+
+        // Score gap detection: find the biggest drop between consecutive results
+        // If scores are [55%, 52%, 50%, 38%, 35%] → biggest gap at 50%→38% → cut there
+        if (filteredByScore.length > 2) {
+            let biggestGap = 0;
+            let gapIndex = filteredByScore.length;
+            for (let i = 0; i < filteredByScore.length - 1; i++) {
+                const gap = filteredByScore[i].similarity - filteredByScore[i + 1].similarity;
+                if (gap > biggestGap && gap > 0.05) { // Only care about drops > 5%
+                    biggestGap = gap;
+                    gapIndex = i + 1;
+                }
+            }
+            // If a significant gap was found, cut everything after it
+            if (biggestGap > 0.05) {
+                filteredByScore = filteredByScore.slice(0, gapIndex);
+            }
+        }
+
+        // Step 2: Category Clustering — identify dominant category from top 3
+        const top3Matches = filteredByScore.slice(0, 3);
+        const categoryCounts = {};
+        for (const match of top3Matches) {
+            const product = uniqueProductMap.get(match.productId);
+            if (product && product.category) {
+                const cat = product.category.toLowerCase().trim();
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            }
+        }
+
+        let dominantCategory = null;
+        let maxCatCount = 0;
+        for (const [cat, count] of Object.entries(categoryCounts)) {
+            if (count > maxCatCount) {
+                maxCatCount = count;
+                dominantCategory = cat;
+            }
+        }
+
+        // Step 3: Build results — same category only (unless exact visual match)
+        const EXACT_THRESHOLD = 0.70;
+        const SIMILAR_THRESHOLD = 0.50;
+
         const results = [];
-        for (const match of similarityResults) {
-            // Skip low-confidence matches
-            if (match.similarity < MIN_SIMILARITY_THRESHOLD) {
+        for (const match of filteredByScore) {
+            const product = uniqueProductMap.get(match.productId);
+            if (!product) continue;
+
+            const prodObj = product.toObject();
+            delete prodObj.imageEmbedding;
+
+            const productCategory = (prodObj.category || '').toLowerCase().trim();
+            const isSameCategory = dominantCategory && productCategory === dominantCategory;
+
+            // Different category + not an exact visual match → skip
+            if (dominantCategory && !isSameCategory && match.similarity < EXACT_THRESHOLD) {
                 continue;
             }
-            const product = products.find(p => p._id.toString() === match.productId) ||
-                productsWithEmbeddings.find(p => p._id.toString() === match.productId);
-            if (product) {
-                const prodObj = product.toObject();
-                delete prodObj.imageEmbedding; // Don't send embedding to frontend
-                results.push({
-                    product: prodObj,
-                    similarity: Math.round(match.similarity * 100) / 100
-                });
+
+            let matchType;
+            if (match.similarity >= EXACT_THRESHOLD) {
+                matchType = 'exact';
+            } else if (match.similarity >= SIMILAR_THRESHOLD) {
+                matchType = 'similar';
+            } else {
+                matchType = 'related';
             }
+
+            results.push({
+                product: prodObj,
+                similarity: Math.round(match.similarity * 100) / 100,
+                matchType: matchType
+            });
         }
+
+        const finalResults = results.slice(0, topN);
+
+        const exactCount = finalResults.filter(r => r.matchType === 'exact').length;
+        const similarCount = finalResults.filter(r => r.matchType === 'similar').length;
+        const relatedCount = finalResults.filter(r => r.matchType === 'related').length;
+        console.log(`🔍 Visual Search: best=${(bestScore * 100).toFixed(1)}%, cutoff=${(dynamicCutoff * 100).toFixed(1)}%, category="${dominantCategory || 'mixed'}"`);
+        console.log(`   Results: ${exactCount} exact, ${similarCount} similar, ${relatedCount} related`);
+
+
 
         res.json({
             success: true,
-            count: results.length,
-            results: results,
-            source: productsWithEmbeddings.length > 10 ? 'embeddings_fast' : 'on_demand'
+            count: finalResults.length,
+            results: finalResults,
+            source: productsWithEmbeddings.length > 10 ? 'embeddings_fast' : 'on_demand',
+            breakdown: { exact: exactCount, similar: similarCount, related: relatedCount },
+            dominantCategory: dominantCategory
         });
 
     } catch (error) {
