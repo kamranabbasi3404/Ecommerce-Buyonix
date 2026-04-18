@@ -28,7 +28,6 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     },
   ]);
   const [inputMessage, setInputMessage] = useState('');
-  const [helpfulResponse, setHelpfulResponse] = useState<{ [key: string]: 'yes' | 'no' | null }>({});
   const [isLoading, setIsLoading] = useState(false);
 
   // Category mapping - Maps user queries to actual product categories in database
@@ -416,13 +415,6 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const handleFeedback = (messageId: string, feedback: 'yes' | 'no') => {
-    setHelpfulResponse((prev) => ({
-      ...prev,
-      [messageId]: feedback,
-    }));
   };
 
   const formatMessage = (text: string) => {
