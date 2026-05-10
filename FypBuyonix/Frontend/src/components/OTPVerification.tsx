@@ -6,7 +6,7 @@ interface OTPVerificationProps {
   onResend: () => void;
   isLoading?: boolean;
   error?: string;
-  purpose: 'signup' | 'login';
+  purpose: 'signup' | 'login' | 'forgot-password';
 }
 
 const OTPVerification: React.FC<OTPVerificationProps> = ({

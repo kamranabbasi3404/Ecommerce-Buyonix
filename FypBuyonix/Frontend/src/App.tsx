@@ -3,6 +3,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import SignUp from './components/SignUp';
 import Login from './components/Login';
+import ForgetPassword from './components/ForgetPassword';
 import ShoppingCart from './components/ShoppingCart';
 import { CartProvider } from './context/CartContext';
 import SellerPortal from './seller/pages/SellerPortal.tsx';
@@ -64,6 +65,7 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signin" element={<Login />} /> {/* Alias for login */}
+            <Route path="/forgot-password" element={<ForgetPassword />} />
             <Route path="/about" element={<About />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
