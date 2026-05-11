@@ -13,36 +13,52 @@ const passportSetup = require("./passport");
 const CFRecommender = require("./utils/cfRecommender");
 const { Message, Conversation } = require("./models/chat");
 
+// Environment variables
+const PORT = process.env.PORT || 5000;
+const NODE_ENV = process.env.NODE_ENV || "development";
+const SESSION_SECRET = process.env.SESSION_SECRET || "cyberwolve";
+
+// CORS origins - support both development and production
+const ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    process.env.FRONTEND_URL || "http://localhost:5173"
+];
+
 // Create HTTP server for Socket.io
 const server = http.createServer(app);
 
-// Initialize Socket.io
+// Initialize Socket.io with production-safe CORS
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:5173", "http://localhost:5174"],
+        origin: ALLOWED_ORIGINS,
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"]
     }
 });
 
 //connect to mongodb
 mongoose.connect(process.env.DB_URI).then(() => {
-    console.log("Connected to MongoDB");
+    console.log("✓ Connected to MongoDB");
 }).catch((err) => {
-    console.log(err);
+    console.error("✗ MongoDB connection error:", err.message);
+    process.exit(1);
 });
 
 // Use express-session instead of cookie-session
 app.use(
     session({
         name: "session",
-        secret: "cyberwolve",
+        secret: SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
         cookie: {
             maxAge: 24 * 60 * 60 * 1000,
-            secure: false,
+            secure: NODE_ENV === "production", // HTTPS only in production
             httpOnly: true,
+            sameSite: "lax"
         }
     })
 );
@@ -55,9 +71,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use(
     cors({
-        origin: ["http://localhost:5173", "http://localhost:5174"],
-        methods: "GET,POST,PUT,DELETE",
+        origin: ALLOWED_ORIGINS,
+        methods: "GET,POST,PUT,DELETE,PATCH",
         credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"]
     })
 );
 
@@ -146,10 +163,26 @@ cfRecommender.initialize().then((success) => {
 });
 
 // Use server.listen instead of app.listen for Socket.io
-server.listen(port, () => {
-    console.log(`Server is running on port ${port}...`);
+server.listen(PORT, () => {
+    console.log(`\n========================================`);
+    console.log(`🚀 Server started successfully`);
+    console.log(`Environment: ${NODE_ENV}`);
+    console.log(`Port: ${PORT}`);
+    console.log(`Database: Connected`);
+    console.log(`CORS Origins: ${ALLOWED_ORIGINS.join(", ")}`);
+    console.log(`========================================\n`);
     console.log("🤖 AI-powered recommendations available at /product/recommendations/:userId");
     console.log("💬 Real-time chat enabled via Socket.io");
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+        console.log('Server closed');
+        mongoose.connection.close();
+        process.exit(0);
+    });
 });
 
 module.exports = app;

@@ -2,12 +2,18 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const passport = require("passport");
 const User = require('./models/user');
 
+// Dynamic callback URL based on environment
+const NODE_ENV = process.env.NODE_ENV || "development";
+const CALLBACK_URL = NODE_ENV === "production" 
+    ? `${process.env.BACKEND_URL}/auth/google/callback`
+    : "http://localhost:5000/auth/google/callback";
+
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/auth/google/callback",
+      callbackURL: CALLBACK_URL,
       scope: ["profile", "email"],
     },
 
@@ -41,6 +47,7 @@ passport.use(
         await user.save();
         return done(null, user);
       } catch (error) {
+        console.error("Google OAuth error:", error);
         return done(error, null);
       }
     }
@@ -56,6 +63,7 @@ passport.deserializeUser(async (id, done) => {
     const user = await User.findById(id);
     done(null, user);
   } catch (error) {
+    console.error("Deserialization error:", error);
     done(error, null);
   }
 });
