@@ -31,7 +31,7 @@ const Login = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/auth/send-login-otp', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/send-login-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ const Login = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/auth/verify-login-otp', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/verify-login-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ const Login = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/auth/send-login-otp', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/send-login-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
