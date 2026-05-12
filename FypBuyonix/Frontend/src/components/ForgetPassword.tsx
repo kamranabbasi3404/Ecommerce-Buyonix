@@ -57,7 +57,7 @@ const ForgetPassword = () => {
     setOtp(enteredOtp);
 
     try {
-      const response = await fetch('http://localhost:5000/auth/verify-forgot-password-otp', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/verify-forgot-password-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ const ForgetPassword = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/auth/send-forgot-password-otp', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/send-forgot-password-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ const ForgetPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/auth/reset-password', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -29,7 +29,7 @@ const ChatWidget = ({ sellerId, sellerName, userId, userName, onClose }: ChatWid
 
     // Connect to socket
     useEffect(() => {
-        const newSocket = io('http://localhost:5000', {
+        const newSocket = io(`${import.meta.env.VITE_API_URL}`, {
             withCredentials: true
         });
         setSocket(newSocket);
@@ -43,7 +43,7 @@ const ChatWidget = ({ sellerId, sellerName, userId, userName, onClose }: ChatWid
     useEffect(() => {
         const initConversation = async () => {
             try {
-                const response = await fetch('http://localhost:5000/chat/conversation', {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/conversation`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -73,7 +73,7 @@ const ChatWidget = ({ sellerId, sellerName, userId, userName, onClose }: ChatWid
         // Fetch existing messages
         const fetchMessages = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/chat/messages/${conversationId}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/messages/${conversationId}`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
@@ -90,7 +90,7 @@ const ChatWidget = ({ sellerId, sellerName, userId, userName, onClose }: ChatWid
         fetchMessages();
 
         // Mark as read
-        fetch('http://localhost:5000/chat/read', {
+        fetch(`${import.meta.env.VITE_API_URL}/chat/read`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',

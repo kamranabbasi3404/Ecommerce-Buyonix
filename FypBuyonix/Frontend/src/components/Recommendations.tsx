@@ -27,7 +27,7 @@ const Recommendations: React.FC = () => {
   const cartContext = useContext(CartContext);
   const addToCart = cartContext?.addToCart;
 
-  const BACKEND_URL = 'http://localhost:5000';
+  const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchRecommendations = async () => {

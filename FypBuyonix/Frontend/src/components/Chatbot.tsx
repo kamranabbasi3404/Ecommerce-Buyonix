@@ -67,7 +67,7 @@ const Chatbot = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
   const searchProducts = async (query: string, category?: string): Promise<Product[]> => {
     try {
       // Fetch all products from backend and filter client-side
-      const response = await fetch(`http://localhost:5000/product?limit=100`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/product?limit=100`);
       if (!response.ok) return [];
       const data = await response.json();
 

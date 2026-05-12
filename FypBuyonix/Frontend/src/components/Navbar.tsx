@@ -51,7 +51,7 @@ const Navbar = () => {
 
     try {
       // Call backend logout endpoint
-      await fetch('http://localhost:5000/auth/logout', {
+      await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
         method: 'GET',
         credentials: 'include',
       });

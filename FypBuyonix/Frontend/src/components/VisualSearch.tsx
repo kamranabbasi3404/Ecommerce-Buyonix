@@ -129,7 +129,7 @@ const VisualSearch = ({ isOpen, onClose }: VisualSearchProps) => {
         setResults([]);
 
         try {
-            const response = await fetch('http://localhost:5000/product/visual-search', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/product/visual-search`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
