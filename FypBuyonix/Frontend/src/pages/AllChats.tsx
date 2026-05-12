@@ -42,7 +42,7 @@ const AllChats = () => {
             if (!userId) return;
 
             try {
-                const response = await fetch(`http://localhost:5000/chat/user/${userId}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/user/${userId}`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
@@ -131,7 +131,7 @@ const AllChats = () => {
                                     // Mark as read when chat is opened
                                     if (conv.userUnread > 0) {
                                         try {
-                                            await fetch('http://localhost:5000/chat/read', {
+                                            await fetch(`${import.meta.env.VITE_API_URL}/chat/read`, {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 credentials: 'include',

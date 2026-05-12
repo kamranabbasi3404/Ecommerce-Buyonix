@@ -69,7 +69,7 @@ const Categories: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/product?page=${page}&limit=20`,
+        `${import.meta.env.VITE_API_URL}/product?page=${page}&limit=20`,
         { credentials: 'include' }
       );
 

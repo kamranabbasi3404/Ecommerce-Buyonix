@@ -31,7 +31,7 @@ const SellerProducts = () => {
     try {
       setLoading(true);
       setError("");
-      const response = await fetch(`http://localhost:5000/product/seller/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/product/seller/${id}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -72,7 +72,7 @@ const SellerProducts = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/product/${productId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/product/${productId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -170,7 +170,7 @@ const SellerProducts = () => {
           <button
             onClick={async () => {
               try {
-                await fetch('http://localhost:5000/seller/logout', {
+                await fetch(`${import.meta.env.VITE_API_URL}/seller/logout`, {
                   method: 'POST',
                   credentials: 'include',
                 });

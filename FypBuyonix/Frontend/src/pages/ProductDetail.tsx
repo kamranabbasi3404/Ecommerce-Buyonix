@@ -100,7 +100,7 @@ const ProductDetail = () => {
 
             try {
                 setLoading(true);
-                const response = await fetch(`http://localhost:5000/product/${productId}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/product/${productId}`, {
                     credentials: 'include',
                 });
 
@@ -129,7 +129,7 @@ const ProductDetail = () => {
 
             try {
                 const response = await fetch(
-                    `http://localhost:5000/product?category=${encodeURIComponent(product.category)}&limit=6`,
+                    `${import.meta.env.VITE_API_URL}/product?category=${encodeURIComponent(product.category)}&limit=6`,
                     { credentials: 'include' }
                 );
 
@@ -157,7 +157,7 @@ const ProductDetail = () => {
             setLoadingReviews(true);
             try {
                 const response = await fetch(
-                    `http://localhost:5000/product/${productId}/reviews?limit=10`,
+                    `${import.meta.env.VITE_API_URL}/product/${productId}/reviews?limit=10`,
                     { credentials: 'include' }
                 );
 
@@ -224,7 +224,7 @@ const ProductDetail = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/product/${product._id}/reviews`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/product/${product._id}/reviews`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -401,7 +401,7 @@ const ProductDetail = () => {
         setIsProcessingOffer(true);
 
         try {
-            const response = await fetch('http://localhost:5000/bargain/negotiate', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/bargain/negotiate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

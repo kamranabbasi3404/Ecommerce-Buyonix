@@ -30,7 +30,7 @@ const SellerDashboard = () => {
     try {
       setLoading(true);
       // Fetch products count
-      const productsResponse = await fetch(`http://localhost:5000/product/seller/${sellerId}`, {
+      const productsResponse = await fetch(`${import.meta.env.VITE_API_URL}/product/seller/${sellerId}`, {
         credentials: 'include',
       });
 
@@ -142,7 +142,7 @@ const SellerDashboard = () => {
           <button
             onClick={async () => {
               try {
-                await fetch('http://localhost:5000/seller/logout', {
+                await fetch(`${import.meta.env.VITE_API_URL}/seller/logout`, {
                   method: 'POST',
                   credentials: 'include',
                 });

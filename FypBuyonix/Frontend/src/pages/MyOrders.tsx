@@ -61,7 +61,7 @@ export default function MyOrders() {
             const userInfo = JSON.parse(userInfoStr);
             const userEmail = userInfo.email;
 
-            const res = await fetch('http://localhost:5000/order/admin/all', { credentials: 'include' });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/order/admin/all`, { credentials: 'include' });
             const data = await res.json();
 
             if (data.success && data.orders) {

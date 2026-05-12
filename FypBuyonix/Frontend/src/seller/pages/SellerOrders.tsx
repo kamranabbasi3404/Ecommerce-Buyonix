@@ -54,7 +54,7 @@ const SellerOrders = () => {
         return;
       }
 
-      const res = await fetch(`http://localhost:5000/order/seller/${sellerId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/order/seller/${sellerId}`, {
         credentials: 'include'
       });
 
@@ -175,7 +175,7 @@ const SellerOrders = () => {
           <button
             onClick={async () => {
               try {
-                await fetch('http://localhost:5000/seller/logout', {
+                await fetch(`${import.meta.env.VITE_API_URL}/seller/logout`, {
                   method: 'POST',
                   credentials: 'include',
                 });

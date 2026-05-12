@@ -163,7 +163,7 @@ const Checkout: React.FC = () => {
 
     const fetchProductDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/product/${mainProduct._id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/product/${mainProduct._id}`, {
           credentials: 'include'
         });
         const data = await response.json();
@@ -184,7 +184,7 @@ const Checkout: React.FC = () => {
       setLoadingReviews(true);
       try {
         const response = await fetch(
-          `http://localhost:5000/product/${mainProduct._id}/reviews?limit=5`,
+          `${import.meta.env.VITE_API_URL}/product/${mainProduct._id}/reviews?limit=5`,
           { credentials: 'include' }
         );
         const data = await response.json();
@@ -210,14 +210,14 @@ const Checkout: React.FC = () => {
         // In production, you'd get the actual userId from auth context
         const userId = localStorage.getItem('buyonix_user_id') || 'user_1';
 
-        const response = await fetch(`http://localhost:5000/product/related/${userId}?num=4`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/product/related/${userId}?num=4`);
         const result = await response.json();
 
         if (result.relatedProducts && result.relatedProducts.length > 0) {
           setRelatedProducts(result.relatedProducts);
         } else {
           // Fallback to random products if no recommendations
-          const fallbackResponse = await fetch('http://localhost:5000/product?limit=4');
+          const fallbackResponse = await fetch(`${import.meta.env.VITE_API_URL}/product?limit=4`);
           const fallbackResult = await fallbackResponse.json();
           if (fallbackResult.products) {
             setRelatedProducts(fallbackResult.products);
@@ -227,7 +227,7 @@ const Checkout: React.FC = () => {
         console.error('Error fetching related products:', error);
         // Fallback: try basic product fetch
         try {
-          const response = await fetch('http://localhost:5000/product?limit=4');
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/product?limit=4`);
           const result = await response.json();
           if (result.products) {
             setRelatedProducts(result.products);
@@ -343,7 +343,7 @@ const Checkout: React.FC = () => {
 
     try {
       // Call AI bargaining API
-      const response = await fetch('http://localhost:5000/bargain/negotiate', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/bargain/negotiate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -471,7 +471,7 @@ const Checkout: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/product/${mainProduct._id}/reviews`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/product/${mainProduct._id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

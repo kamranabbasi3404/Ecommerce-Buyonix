@@ -23,7 +23,7 @@ const PaymentVerification: React.FC = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/order/admin/all', { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/order/admin/all`, { credentials: 'include' });
       if (!res.ok) { setPayments([]); return; }
       const data = await res.json();
 
@@ -61,7 +61,7 @@ const PaymentVerification: React.FC = () => {
   const updatePaymentStatus = async (orderNumber: string, paymentStatus: string) => {
     setActionLoading(orderNumber);
     try {
-      const res = await fetch(`http://localhost:5000/order/${orderNumber}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/order/${orderNumber}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

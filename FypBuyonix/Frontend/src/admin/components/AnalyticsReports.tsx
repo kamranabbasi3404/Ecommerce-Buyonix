@@ -6,7 +6,7 @@ const AnalyticsReports: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/product', { credentials: 'include' });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/product`, { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         const prods = data.products || [];

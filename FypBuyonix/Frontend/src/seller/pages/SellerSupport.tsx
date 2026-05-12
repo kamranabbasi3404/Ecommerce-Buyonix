@@ -54,7 +54,7 @@ const SellerSupport = () => {
     const fetchTickets = async () => {
         if (!sellerInfo || !sellerInfo.id) { setLoading(false); return; }
         try {
-            const res = await fetch(`http://localhost:5000/support/my-tickets?senderId=${sellerInfo.id}&senderType=seller`, { credentials: 'include' });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/support/my-tickets?senderId=${sellerInfo.id}&senderType=seller`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setTickets(data.tickets);
         } catch (err) {
@@ -80,7 +80,7 @@ const SellerSupport = () => {
 
         setSubmitting(true);
         try {
-            const res = await fetch('http://localhost:5000/support/create', {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/support/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -109,7 +109,7 @@ const SellerSupport = () => {
     const handleReply = async () => {
         if (!replyText.trim() || !selectedTicket) return;
         try {
-            const res = await fetch(`http://localhost:5000/support/${selectedTicket}/reply`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/support/${selectedTicket}/reply`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -189,7 +189,7 @@ const SellerSupport = () => {
                     <button
                         onClick={async () => {
                             try {
-                                await fetch('http://localhost:5000/seller/logout', { method: 'POST', credentials: 'include' });
+                                await fetch(`${import.meta.env.VITE_API_URL}/seller/logout`, { method: 'POST', credentials: 'include' });
                             } catch { }
                             localStorage.removeItem('sellerInfo');
                             localStorage.removeItem('sellerId');

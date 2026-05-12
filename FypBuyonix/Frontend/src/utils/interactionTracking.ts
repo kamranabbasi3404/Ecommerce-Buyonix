@@ -3,7 +3,7 @@
  * Tracks user interactions with products for collaborative filtering
  */
 
-const API_URL = 'http://localhost:5000';
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 export interface TrackingResponse {
   success: boolean;

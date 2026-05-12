@@ -98,7 +98,7 @@ const SellerAnalytics = () => {
       setLoading(true);
 
       // Fetch products
-      const productsResponse = await fetch(`http://localhost:5000/product/seller/${sellerId}`, {
+      const productsResponse = await fetch(`${import.meta.env.VITE_API_URL}/product/seller/${sellerId}`, {
         credentials: 'include',
       });
 
@@ -118,7 +118,7 @@ const SellerAnalytics = () => {
       }
 
       // Fetch orders
-      const ordersResponse = await fetch(`http://localhost:5000/order/seller/${sellerId}`, {
+      const ordersResponse = await fetch(`${import.meta.env.VITE_API_URL}/order/seller/${sellerId}`, {
         credentials: 'include',
       });
 
@@ -340,7 +340,7 @@ const SellerAnalytics = () => {
           <button
             onClick={async () => {
               try {
-                await fetch('http://localhost:5000/seller/logout', { method: 'POST', credentials: 'include' });
+                await fetch(`${import.meta.env.VITE_API_URL}/seller/logout`, { method: 'POST', credentials: 'include' });
               } catch (error) {
                 console.error('Logout error:', error);
               }

@@ -41,7 +41,7 @@ const OrderManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:5000/order/admin/all', { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/order/admin/all`, { credentials: 'include' });
       if (!res.ok) {
         throw new Error('Failed to fetch orders');
       }

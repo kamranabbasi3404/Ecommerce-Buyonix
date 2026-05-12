@@ -46,7 +46,7 @@ const SellerChats = () => {
 
     // Initialize socket
     useEffect(() => {
-        const newSocket = io('http://localhost:5000', { withCredentials: true });
+        const newSocket = io(`${import.meta.env.VITE_API_URL}`, { withCredentials: true });
         setSocket(newSocket);
         return () => { newSocket.disconnect(); };
     }, []);
@@ -57,7 +57,7 @@ const SellerChats = () => {
 
         const fetchConversations = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/chat/seller/${sellerInfo.id}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/seller/${sellerInfo.id}`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
@@ -80,7 +80,7 @@ const SellerChats = () => {
 
         const fetchMessages = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/chat/messages/${selectedConvo._id}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/messages/${selectedConvo._id}`, {
                     credentials: 'include'
                 });
                 const data = await response.json();
@@ -89,7 +89,7 @@ const SellerChats = () => {
                 }
 
                 // Mark as read - fix URL and update local state
-                await fetch(`http://localhost:5000/chat/read`, {
+                await fetch(`${import.meta.env.VITE_API_URL}/chat/read`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',

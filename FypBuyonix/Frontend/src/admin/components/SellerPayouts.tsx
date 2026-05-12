@@ -21,7 +21,7 @@ const SellerPayouts: React.FC = () => {
     const fetchPayouts = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/payouts', { credentials: 'include' });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/payouts`, { credentials: 'include' });
         if (!res.ok) {
           // No backend yet - keep empty
           setPayouts([]);

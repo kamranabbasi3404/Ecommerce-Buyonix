@@ -36,7 +36,7 @@ const PendingSellers: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch('http://localhost:5000/seller/pending', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/seller/pending`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -63,7 +63,7 @@ const PendingSellers: React.FC = () => {
 
     try {
       setProcessing(sellerId);
-      const response = await fetch(`http://localhost:5000/seller/${sellerId}/approve`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/seller/${sellerId}/approve`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ const PendingSellers: React.FC = () => {
 
     try {
       setProcessing(sellerId);
-      const response = await fetch(`http://localhost:5000/seller/${sellerId}/reject`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/seller/${sellerId}/reject`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

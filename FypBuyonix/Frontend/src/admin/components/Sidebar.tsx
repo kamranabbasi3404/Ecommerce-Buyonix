@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, onLogout }
 
   const fetchPendingCount = async () => {
     try {
-      const response = await fetch('http://localhost:5000/seller/pending', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/seller/pending`, {
         method: 'GET',
         credentials: 'include',
       });

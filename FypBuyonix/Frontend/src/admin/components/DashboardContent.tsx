@@ -9,6 +9,22 @@ interface RecentOrder {
   orderDate: string;
 }
 
+interface ApiOrder {
+  orderNumber: string;
+  customerInfo?: {
+    firstName: string;
+    lastName: string;
+  };
+  total?: number;
+  orderStatus?: string;
+  paymentStatus?: string;
+  orderDate?: string;
+}
+
+interface SupportTicket {
+  status: string;
+}
+
 const DashboardContent: React.FC = () => {
   const [revenue, setRevenue] = useState<number>(0);
   const [totalSellers, setTotalSellers] = useState<number>(0);
@@ -24,10 +40,10 @@ const DashboardContent: React.FC = () => {
       setLoading(true);
       try {
         const [ordersRes, sellersRes, productsRes, ticketsRes] = await Promise.allSettled([
-          fetch('http://localhost:5000/order/admin/all', { credentials: 'include' }),
-          fetch('http://localhost:5000/seller/all', { credentials: 'include' }),
-          fetch('http://localhost:5000/product', { credentials: 'include' }),
-          fetch('http://localhost:5000/support/queries', { credentials: 'include' })
+          fetch(`${import.meta.env.VITE_API_URL}/order/admin/all`, { credentials: 'include' }),
+          fetch(`${import.meta.env.VITE_API_URL}/seller/all`, { credentials: 'include' }),
+          fetch(`${import.meta.env.VITE_API_URL}/product`, { credentials: 'include' }),
+          fetch(`${import.meta.env.VITE_API_URL}/support/queries`, { credentials: 'include' })
         ]);
 
         // Orders + Revenue
@@ -38,7 +54,7 @@ const DashboardContent: React.FC = () => {
             setRevenue(data.totalRevenue || 0);
             // Get recent 5 orders
             if (Array.isArray(data.orders)) {
-              const recent = data.orders.slice(0, 5).map((o: any) => ({
+              const recent = data.orders.slice(0, 5).map((o: ApiOrder) => ({
                 orderNumber: o.orderNumber,
                 customerName: o.customerInfo ? `${o.customerInfo.firstName} ${o.customerInfo.lastName}` : 'N/A',
                 total: o.total || 0,
@@ -70,7 +86,7 @@ const DashboardContent: React.FC = () => {
           const data = await ticketsRes.value.json();
           if (data.success && Array.isArray(data.tickets)) {
             setTotalTickets(data.tickets.length);
-            setOpenTickets(data.tickets.filter((t: any) => t.status !== 'Resolved').length);
+            setOpenTickets(data.tickets.filter((t: SupportTicket) => t.status !== 'Resolved').length);
           }
         }
       } catch (err) {

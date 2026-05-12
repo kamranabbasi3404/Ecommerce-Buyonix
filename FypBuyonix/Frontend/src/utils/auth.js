@@ -1,10 +1,10 @@
 export const GoogleAuth = () => {
-  window.open("http://localhost:5000/auth/google", "_self");
+  window.open(`${import.meta.env.VITE_API_URL}/auth/google`, "_self");
 };
 
 export const checkAuthStatus = async () => {
   try {
-    const response = await fetch("http://localhost:5000/auth/login/success", {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login/success`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -25,5 +25,5 @@ export const checkAuthStatus = async () => {
 };
 
 export const logout = () => {
-  window.open("http://localhost:5000/auth/logout", "_self");
+  window.open(`${import.meta.env.VITE_API_URL}/auth/logout`, "_self");
 };

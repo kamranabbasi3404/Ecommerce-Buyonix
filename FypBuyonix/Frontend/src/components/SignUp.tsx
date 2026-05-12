@@ -31,7 +31,7 @@ const SignUp = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/auth/send-signup-otp', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/send-signup-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ const SignUp = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/auth/send-signup-otp', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/send-signup-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ const SignUp = () => {
 
   const handleGoogleLogin = () => {
     // Redirect to backend Google auth endpoint
-    window.open("http://localhost:5000/auth/google", "_self"); 
+    window.open(`${import.meta.env.VITE_API_URL}/auth/google`, "_self"); 
   };
 
   return (

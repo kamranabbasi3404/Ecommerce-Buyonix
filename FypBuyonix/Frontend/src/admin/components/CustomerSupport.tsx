@@ -41,7 +41,7 @@ const CustomerSupport: React.FC = () => {
       if (filterType !== 'all') params.append('senderType', filterType);
       if (filterStatus !== 'all') params.append('status', filterStatus);
 
-      const res = await fetch(`http://localhost:5000/support/queries?${params.toString()}`, { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/support/queries?${params.toString()}`, { credentials: 'include' });
       if (!res.ok) { setTickets([]); return; }
       const data = await res.json();
       if (data.success && Array.isArray(data.tickets)) {
@@ -62,7 +62,7 @@ const CustomerSupport: React.FC = () => {
     if (!replyText.trim() || !selectedTicket) return;
     setSending(true);
     try {
-      const res = await fetch(`http://localhost:5000/support/${selectedTicket}/reply`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/support/${selectedTicket}/reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -82,7 +82,7 @@ const CustomerSupport: React.FC = () => {
 
   const handleStatusChange = async (ticketId: string, newStatus: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/support/${ticketId}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/support/${ticketId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

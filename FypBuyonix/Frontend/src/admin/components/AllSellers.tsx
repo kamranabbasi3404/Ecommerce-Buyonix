@@ -38,7 +38,7 @@ const AllSellers: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch('http://localhost:5000/seller/all', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/seller/all`, {
         method: 'GET',
         credentials: 'include',
       });

@@ -81,7 +81,7 @@ const BuyNow: React.FC = () => {
 
         setStripeError('');
         try {
-          const response = await fetch('http://localhost:5000/payment/create-payment-intent', {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/payment/create-payment-intent`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount: total, currency: 'usd' }),
@@ -218,7 +218,7 @@ const BuyNow: React.FC = () => {
         orderDate: new Date().toISOString(),
       };
 
-      const response = await fetch('http://localhost:5000/order/create', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/order/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -101,7 +101,7 @@ const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: EditPro
     setError("");
 
     try {
-      const response = await fetch(`http://localhost:5000/product/${product._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/product/${product._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

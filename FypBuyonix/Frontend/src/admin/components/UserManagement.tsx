@@ -20,7 +20,7 @@ const UserManagement: React.FC = () => {
   const fetchSellers = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/seller/all', { credentials: 'include' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/seller/all`, { credentials: 'include' });
       if (!res.ok) {
         setSellerIds([]);
         return;

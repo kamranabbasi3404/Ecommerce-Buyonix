@@ -51,7 +51,7 @@ const Support: React.FC = () => {
         const user = getUserInfo();
         if (!user || !user.id) { setLoading(false); return; }
         try {
-            const res = await fetch(`http://localhost:5000/support/my-tickets?senderId=${user.id}&senderType=user`, { credentials: 'include' });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/support/my-tickets?senderId=${user.id}&senderType=user`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setTickets(data.tickets);
         } catch (err) {
@@ -71,7 +71,7 @@ const Support: React.FC = () => {
 
         setSubmitting(true);
         try {
-            const res = await fetch('http://localhost:5000/support/create', {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/support/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -102,7 +102,7 @@ const Support: React.FC = () => {
     const handleReply = async () => {
         if (!replyText.trim() || !selectedTicket) return;
         try {
-            const res = await fetch(`http://localhost:5000/support/${selectedTicket}/reply`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/support/${selectedTicket}/reply`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
