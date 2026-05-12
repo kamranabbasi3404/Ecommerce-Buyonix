@@ -126,6 +126,7 @@ npm test
 
 ## 👥 Authors
 
+- **Muhammad Faisal** - [Github](https://github.com/Faisal468)
 - **Kamran Abbasi** — [GitHub](https://github.com/kamranabbasi3404)
 
 ---
