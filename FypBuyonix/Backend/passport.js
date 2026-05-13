@@ -5,7 +5,7 @@ const User = require('./models/user');
 // Dynamic callback URL based on environment
 const NODE_ENV = process.env.NODE_ENV || "development";
 const CALLBACK_URL = NODE_ENV === "production" 
-    ? `${process.env.BACKEND_URL}/auth/google/callback`
+    ? `${process.env.BACKEND_URL.replace(/\/$/, '')}/auth/google/callback`
     : "http://localhost:5000/auth/google/callback";
 
 passport.use(
