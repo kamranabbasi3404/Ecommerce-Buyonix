@@ -14,7 +14,7 @@ router.get("/google", passport.authenticate("google", {
 router.get(
     "/google/callback",
     passport.authenticate("google", {
-        successRedirect: process.env.CLIENT_URL,
+        successRedirect: process.env.FRONTEND_URL,
         failureRedirect: "/auth/login/failed",
     })
 );
@@ -56,7 +56,7 @@ router.get("/logout", (req, res) => {
                 return res.status(500).json({ message: "Error destroying session" });
             }
             res.clearCookie('connect.sid'); // Clear the session cookie (default name for express-session)
-            res.redirect(process.env.CLIENT_URL);
+            res.redirect(process.env.FRONTEND_URL);
         });
     });
 });

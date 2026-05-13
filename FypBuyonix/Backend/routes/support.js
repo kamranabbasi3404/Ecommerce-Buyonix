@@ -146,7 +146,7 @@ router.post('/:ticketId/reply', async (req, res) => {
 
         // Send email notification asynchronously (don't block response)
         if (sender === 'agent' && ticket.senderEmail) {
-            const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
             const viewUrl = ticket.senderType === 'seller'
                 ? `${frontendUrl}/seller-support`
                 : `${frontendUrl}/support`;
