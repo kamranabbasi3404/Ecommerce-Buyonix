@@ -12,6 +12,10 @@ const sellerRoute = require("./routes/seller");
 const passportSetup = require("./passport");
 const CFRecommender = require("./utils/cfRecommender");
 const { Message, Conversation } = require("./models/chat");
+const { MongoBinary } = require("mongodb-memory-server");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
+
 
 // Environment variables
 const PORT = process.env.PORT || 5000;
@@ -55,6 +59,7 @@ app.use(
         secret: SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
+        store: MongoStore.Create({mongoUrl: process.env.DB_URI}),
         cookie: {
             maxAge: 24 * 60 * 60 * 1000,
             secure: NODE_ENV === "production", // HTTPS only in production

@@ -39,7 +39,7 @@ const PendingSellers: React.FC = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/seller/pending`, {
         method: 'GET',
         credentials: 'include',
-      });
+      });   
       
       const result = await response.json();
       
