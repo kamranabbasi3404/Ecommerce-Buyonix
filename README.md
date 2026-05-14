@@ -128,7 +128,7 @@ npm test
 
 - **Muhammad Faisal** - [Github](https://github.com/Faisal468)
 - **Kamran Abbasi** — [GitHub](https://github.com/kamranabbasi3404)
-
+- **Abdul Hadi** — [GitHub](https://github.com/abdulHadi-71)
 ---
 
 ## 📄 License
